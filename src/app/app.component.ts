@@ -14,7 +14,7 @@ import { take, filter } from 'rxjs/operators';
 })
 export class AppComponent implements OnInit {
 
-    private myForm: FormGroup;
+    public myForm: FormGroup;
     canvasColor: string = "#ffffff";
     shimmerColor: string = "rgb(102,102,102)";
     canvasBorderRadiusTopLeft: number = 0;
