@@ -1,0 +1,231 @@
+﻿<div id="designView">
+  <div id="designViewInner">
+  <div class="paneLabel dark">Design View</div>
+  <div class="preMadeTemplateOptions">
+    <div class="premadeTemplates">
+      <label>Templates:</label>
+      <div class="optionContainer">
+        <div class="option" [ngClass]="{'active' : selectedTemplate == 'option1'}" (click)="createTemplate('option1')">blog</div>
+        <div class="option" [ngClass]="{'active' : selectedTemplate == 'option2'}" (click)="createTemplate('option2')">list</div>
+        <div class="option" [ngClass]="{'active' : selectedTemplate == 'option3'}" (click)="createTemplate('option3')">video</div>
+        <div class="option" [ngClass]="{'active' : selectedTemplate == 'option4'}" (click)="createTemplate('option4')">blank</div>
+      </div>
+      <div class="rightClickInstructions">Right click the canvas to add more shapes. Left click on existing shapes to edit them.</div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="designCanvas" [ngStyle]="{'height': canvasHeight+'px', 'background-color': canvasColor, 'border-radius': canvasBorderRadiusTopLeft+'px '+canvasBorderRadiusTopRight+'px '+canvasBorderRadiusBottomRight+'px '+this.canvasBorderRadiusBottomLeft+'px', 'background-image': designCanvasTempBackgroundImage != null ? 'url(' + designCanvasTempBackgroundImage + ')' : 'none', 'background-position': designCanvasTempBackgroundImage != null ? ''+tempBackgroundXPos+'px '+tempBackgroundYPos+'px' : 'inital'}" (contextmenu)="open($event, $event); $event.preventDefault();" (paste)="onPaste($event)">
+      <div (clickOutside)="onClickedOutside($event)">
+        <ng-container *ngFor="let item of designData; let i=index">
+          <div class="itemContainer" [ngClass]="{'active' : i == highlightedItem}">
+              <div class="item" [ngStyle]="{'background-color': item.color, 'width': item.width+item.widthMeasurement, 'height': item.height+'px', 'border-radius': item.width+'px', 'left': item.x+'px', 'top': item.y+'px', 'border-radius': item.type == 'circle' ? item.width+'px' : 0+'px'}" (click)="highlightItem(i,item)">
+                <div class="inner">
+                  <div class="delete" (click)="deleteItem(i)">X</div>
+                </div>
+              </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+<div id="designTools">
+  <div class="paneLabel light">Tools</div>
+
+  <div id="tools">
+
+
+    <form [formGroup]="myForm">
+      
+
+        <div id="itemSpecificDetails" *ngIf="highlightedItem != null">
+          <ul>
+            <li class="subHeading"><div>Item Properties</div></li>
+
+            <li class="itemCoreDetails">
+              <div class="itemCoreDetailsContainer">
+                <div class="block">
+                  <label>x</label>
+                  <input type="number" formControlName="x" />
+                </div>
+                <div class="block">
+                  <label>y</label>
+                  <input type="number" formControlName="y" />
+                </div>
+                <div class="block" *ngIf="selectedType == 'rectangle'">
+                  <label>width</label>
+                  <input type="number" formControlName="width" />
+                  <select formControlName="widthMeasurement" (change)="measurementChanged()">
+                    <option [ngValue]="'px'">px</option>
+                    <option [ngValue]="'%'">%</option>
+                  </select>
+                </div>
+                
+                <div class="block" *ngIf="selectedType == 'circle'">
+                  <label>Diameter</label>
+                  <input type="number" formControlName="width" (keyup)="syncHeight()" (change)="syncHeight()" /> px
+                </div>
+                <div class="block" *ngIf="selectedType == 'rectangle'">
+                  <label>Height</label>
+                  <input type="number" formControlName="height" /> px
+                </div>
+                
+              </div>
+            </li>
+
+            
+            
+            
+            <li class="colorQuestion" style="position: relative;">
+              <label>Color</label>
+              <div class="colorToChoose" [(colorPicker)]="myForm.controls.color.value" [style.background]="myForm.controls.color.value" [cpPosition]="'bottom'" [cpWidth]="'200'" (colorPickerChange)="changeColor($event)"></div>
+            </li>
+
+            <!--<li class="checkboxQuestion">
+      <input type="checkbox" formControlName="allowShimmerOverlay" />
+      <label>Allow shimmer overlay</label>
+    </li>-->
+            <li class="checkboxQuestion">
+              <input type="checkbox" formControlName="antialias" />
+              <label>Anti-alias (Only really going to see this on circles)</label>
+            </li>
+
+            <!--<li><button type="button" (click)="generate()">Generate</button></li>-->
+
+          </ul>
+</div>
+
+        
+
+      
+    </form>
+
+
+    <ul>
+
+      
+
+      <!--<li class="addShape">
+        <label>Add Shape</label>
+        <div>
+          <button type="button" (click)="addCircle()">Add Circle</button>
+          <button type="button" (click)="addRectangle()">Add Rectangle / Square</button>
+        </div>
+      </li>-->
+      <li class="subHeading">Canvas Settings</li>
+      <li class="multipleQuestions">
+        <div class="title">Basics</div>
+        <div class="options">
+          <div class="block" style="position: relative;">
+            <label>Color</label>
+            <div class="colorToChoose" [(colorPicker)]="canvasColor" [style.background]="canvasColor" [cpPosition]="'bottom'" [cpWidth]="'200'" (colorPickerChange)="generate()"></div>
+          </div>
+          <div class="block">
+            <label>Height</label>
+            <input type="number" [(ngModel)]="canvasHeight" (change)="generate()" (keyup)="generate()" />
+          </div>
+          <div class="block">
+            <label>Repeat Design</label>
+            <input type="number" [(ngModel)]="repeatDesign" (change)="generate()" (keyup)="generate()" />
+          </div>
+        </div>
+      </li>
+      <li class="multipleQuestions">
+        <div class="title">Border Radius</div>
+        <div class="options">
+          <div class="block">
+            <label>Top Left</label>
+            <input type="number" [(ngModel)]="canvasBorderRadiusTopLeft" (change)="generate()" (keyup)="generate()" />
+          </div>
+          <div class="block">
+            <label>Top Right</label>
+            <input type="number" [(ngModel)]="canvasBorderRadiusTopRight" (change)="generate()" (keyup)="generate()" />
+          </div>
+          <div class="block">
+            <label>Bottom Right</label>
+            <input type="number" [(ngModel)]="canvasBorderRadiusBottomRight" (change)="generate()" (keyup)="generate()" />
+          </div>
+          <div class="block">
+            <label>Bottom Left</label>
+            <input type="number" [(ngModel)]="canvasBorderRadiusBottomLeft" (change)="generate()" (keyup)="generate()" />
+          </div>
+        </div>
+      </li>
+
+      <li class="multipleQuestions">
+        <div class="title">Shimmer <input type="checkbox" [(ngModel)]="showShimmer" (change)="generate()" /></div>
+        <div class="options" *ngIf="showShimmer == true">
+          <div class="block">
+            <label>Type</label>
+            <select [(ngModel)]="shimmerType" (change)="changeCanvasColorBasedOnShimmerType();generate()">
+              <option [ngValue]="0">Affect shapes only</option>
+              <option [ngValue]="1">Affect whole panel</option>
+            </select>
+          </div>
+          <div class="block">
+            <label>Duration</label>
+            <input type="number" [(ngModel)]="playShimmerDuration" (change)="generate()" (keyup)="generate()" min="0.5" step="0.1" />
+          </div>
+          <div class="block" style="position: relative;">
+            <label>Color</label>
+            <div class="colorToChoose" [(colorPicker)]="shimmerColor" [style.background]="shimmerColor" [cpOutputFormat]="'rgba'" [cpPosition]="'top-left'" [cpWidth]="'200'" (colorPickerChange)="generate()"></div>
+          </div>
+        </div>
+      </li>
+
+      <li *ngIf="designCanvasTempBackgroundImage == null">
+        <div>To temporarily paste your screen onto the canvas in order to properly line up the shapes, take a print screen and paste using ctrl+v.</div>
+      </li>
+
+      <li *ngIf="designCanvasTempBackgroundImage != null">
+        <div>Use the arrow keys to reposition the background.<br />Hit the delete key when you want to remove your temporary background image.</div>
+      </li>
+      </ul>
+
+
+    
+  </div>
+
+</div>
+
+<div id="resultView">
+  <div class="paneLabel dark">Result View</div>
+
+  <div class="container">
+    <div [class]="'skeleton-'+randomSkeletonName"></div>
+  </div>
+
+</div>
+
+<div id="resultCode">
+  <div class="paneLabel light">Code</div>
+
+  <div id="codeContainer">
+
+    <p>Your generated code is below:</p>
+
+    <div class="label">CSS:</div>
+    <textarea readonly>{{generatedCss}}</textarea>
+    <hr />
+    <div class="label">HTML:</div>
+    <textarea readonly>&#60;div class="skeleton-{{randomSkeletonName}}"&#62;&#60;/div&#62;</textarea>
+    <p>Insert your content <strong>inside</strong> this div once it's loaded and ready to be displayed, for example...<br /><br />
+      <strong>Angular:</strong><br />&#60;div class="skeleton-{{randomSkeletonName}}"&#62;&#60;div *ngIf="isLoaded"&#62;&#60;/div&#62;&#60;/div&#62;<br /><br />
+      <strong>Vue:</strong><br />&#60;div class="skeleton-{{randomSkeletonName}}"&#62;&#60;div v-if="isLoaded"&#62;&#60;/div&#62;&#60;/div&#62;<br /><br />
+      <strong>React:</strong><br />&#60;div class="skeleton-{{randomSkeletonName}}"&#62;&#123;isLoaded &#38;&#38;&#60;div&#62;&#60;/div&#62;&#125;&#60;/div&#62;
+    </p>
+  </div>
+
+</div>
+
+
+
+
+<ng-template #userMenu let-position>
+	<section class="user-menu">
+		<div (click)="addCircle(position);close();">Add Circle</div>
+		<div (click)="addRectangle(position);close();">Add Rectangle / Square</div>
+	</section>
+</ng-template>
