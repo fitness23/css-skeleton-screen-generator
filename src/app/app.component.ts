@@ -15,6 +15,7 @@ import { take, filter } from 'rxjs/operators';
 export class AppComponent implements OnInit {
 
     public myForm: FormGroup;
+    newShapeColor: string = "#cccccc";
     canvasColor: string = "#ffffff";
     shimmerColor: string = "rgb(102,102,102)";
     canvasBorderRadiusTopLeft: number = 0;
@@ -699,7 +700,7 @@ export class AppComponent implements OnInit {
             "width": 28,
             "widthMeasurement": "px",
             "height": 28,
-            "color": "#cccccc",
+            "color": this.newShapeColor,
             "x": position.x,
             "y": position.y,
             "allowShimmerOverlay": true,
@@ -718,7 +719,7 @@ export class AppComponent implements OnInit {
             "width": 300,
             "widthMeasurement": "px",
             "height": 20,
-            "color": "#cccccc",
+            "color": this.newShapeColor,
             "x": position.x,
             "y": position.y,
             "allowShimmerOverlay": true,
