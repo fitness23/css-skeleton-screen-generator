@@ -19,7 +19,7 @@
       <div (clickOutside)="onClickedOutside($event)">
         <ng-container *ngFor="let item of designData; let i=index">
           <div class="itemContainer" [ngClass]="{'active' : i == highlightedItem}">
-              <div class="item" [ngStyle]="{'background-color': item.color, 'height': item.height+'px', 'left': item.x+'px', 'top': item.y+'px', 'border-radius': item.type == 'circle' ? item.width+'px' : 0+'px', 'width': item.type == 'circle' ? item.width+item.widthMeasurement : determineRectangleWidth(item)}" (click)="highlightItem(i,item)">
+              <div class="item" [ngStyle]="{'background-color': item.color, 'left': item.x+'px', 'top': item.y+'px', 'border-radius': item.type == 'circle' ? item.diameter+'px' : 0+'px', 'width': item.type == 'circle' ? item.diameter+item.diameterMeasurement : determineRectangleWidth(item), 'height': item.type == 'circle' ? item.diameter+'px' : item.height+'px'}" (click)="highlightItem(i,item)">
                 <div class="inner">
                   <!--<div class="delete" (click)="deleteItem(i)">X</div>--> <!-- This is the old delete button, now users just delete by pressing the delete key -->
                 </div>
@@ -115,7 +115,7 @@
               <div class="itemCoreDetailsContainer">
                 <div class="block">
                   <label>Amount</label>
-                  <input type="number" formControlName="width" (keyup)="syncHeight()" (change)="syncHeight()" />
+                  <input type="number" formControlName="diameter" (keyup)="syncHeight()" (change)="syncHeight()" />
                 </div>
                 <div class="block">
                   <label>Unit</label>
@@ -123,7 +123,7 @@
                 </div>
                 <div class="block">
                   <label>Calc</label>
-                  <select formControlName="widthCalc" (change)="widthCalcChanged()">
+                  <select formControlName="diameterCalc" (change)="diameterCalcChanged()">
                     <option [ngValue]="null">None</option>
                     <option [ngValue]="'-'">-</option>
                     <option [ngValue]="'+'">+</option>
@@ -131,13 +131,13 @@
                     <option [ngValue]="'/'">/</option>
                   </select>
                 </div>
-                  <div class="block" *ngIf="myForm.controls.widthCalc.value != null">
+                  <div class="block" *ngIf="myForm.controls.diameterCalc.value != null">
                     <label>Amount</label>
-                    <input type="number" formControlName="widthCalcAmount" />
+                    <input type="number" formControlName="diameterCalcAmount" />
                   </div>
-                  <div class="block" *ngIf="(myForm.controls.widthCalc.value != null) && ((myForm.controls.widthCalc.value === '-') || (myForm.controls.widthCalc.value === '+'))">
+                  <div class="block" *ngIf="(myForm.controls.diameterCalc.value != null) && ((myForm.controls.diameterCalc.value === '-') || (myForm.controls.diameterCalc.value === '+'))">
                     <label>Unit</label>
-                    <select formControlName="widthCalcUnit">
+                    <select formControlName="diameterCalcUnit">
                       <option [ngValue]="'px'">px</option>
                       <option [ngValue]="'%'">%</option>
                       <option [ngValue]="'rem'">rem</option>

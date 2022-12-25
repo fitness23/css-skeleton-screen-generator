@@ -63,6 +63,11 @@ export class AppComponent implements OnInit {
             widthCalcAmount: [null],
             widthCalcUnit: [null],
             height: [null],
+            diameter: [null],
+            diameterMeasurement: [null],
+            diameterCalc: [null],
+            diameterCalcAmount: [null],
+            diameterCalcUnit: [null],
             color: [null],
             x: [null],
             y: [null],
@@ -255,7 +260,15 @@ export class AppComponent implements OnInit {
         this.designData[this.highlightedItem].widthCalc = this.myForm.value.widthCalc;
         this.designData[this.highlightedItem].widthCalcAmount = this.myForm.value.widthCalcAmount;
         this.designData[this.highlightedItem].widthCalcUnit = this.myForm.value.widthCalcUnit;
+
         this.designData[this.highlightedItem].height = this.myForm.value.height;
+
+        this.designData[this.highlightedItem].diameter = this.myForm.value.diameter;
+        this.designData[this.highlightedItem].diameterMeasurement = this.myForm.value.diameterMeasurement;
+        this.designData[this.highlightedItem].diameterCalc = this.myForm.value.diameterCalc;
+        this.designData[this.highlightedItem].diameterCalcAmount = this.myForm.value.diameterCalcAmount;
+        this.designData[this.highlightedItem].diameterCalcUnit = this.myForm.value.diameterCalcUnit;
+
         this.designData[this.highlightedItem].color = this.myForm.value.color;
         this.designData[this.highlightedItem].x = this.myForm.value.x;
         this.designData[this.highlightedItem].y = this.myForm.value.y;
@@ -298,6 +311,33 @@ export class AppComponent implements OnInit {
         }
     }
 
+    diameterCalcChanged() {
+        
+        if ((this.myForm.value.diameterCalc == null))
+        {
+            this.myForm.controls['diameterCalcAmount'].patchValue(null);
+            this.myForm.controls['diameterCalcUnit'].patchValue(null);
+        }
+        else if ((this.myForm.value.diameterCalc == "-")){
+            this.myForm.controls['diameterCalcAmount'].patchValue(0);
+            this.myForm.controls['diameterCalcUnit'].patchValue('px');
+        }
+        else if ((this.myForm.value.diameterCalc == "+")){
+            this.myForm.controls['diameterCalcAmount'].patchValue(0);
+            this.myForm.controls['diameterCalcUnit'].patchValue('px');
+        }
+        else if ((this.myForm.value.diameterCalc == "*")){
+            this.myForm.controls['diameterCalcAmount'].patchValue(1);
+            this.myForm.controls['diameterCalcUnit'].patchValue(null);
+        }
+        else if ((this.myForm.value.diameterCalc == "/")){
+            this.myForm.controls['diameterCalcAmount'].patchValue(1);
+            this.myForm.controls['diameterCalcUnit'].patchValue(null);
+        }
+    }
+
+
+
     syncHeight()
     {
         this.myForm.controls['height'].patchValue(this.myForm.value.width);
@@ -337,6 +377,7 @@ export class AppComponent implements OnInit {
             return `calc(${record.width}${record.widthMeasurement} ${record.widthCalc} ${record.widthCalcAmount})`;
         }
     }
+    
 
 
     generate()
@@ -376,11 +417,11 @@ export class AppComponent implements OnInit {
                 if ((x.type == "circle")) {
                     if ((x.antialias == false))
                     {
-                        this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.width / 2 + "px at " + x.width / 2 + "px " + x.width / 2 + "px, " + x.color + " 99%, transparent 0 )";
+                        this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.diameter / 2 + "px at " + x.diameter / 2 + "px " + x.diameter / 2 + "px, " + x.color + " 99%, transparent 0 )";
                     }
                     else
                     {
-                        this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.width / 2 + "px at " + x.width / 2 + "px " + x.width / 2 + "px, " + x.color + " " + (x.width / 2 - 1) + "px, transparent " + x.width / 2 + "px )";
+                        this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.diameter / 2 + "px at " + x.diameter / 2 + "px " + x.diameter / 2 + "px, " + x.color + " " + (x.diameter / 2 - 1) + "px, transparent " + x.diameter / 2 + "px )";
                     }
                 }
 
@@ -404,7 +445,7 @@ export class AppComponent implements OnInit {
                     this.generatedCss = this.generatedCss + "" + this.determineRectangleWidth(x) + " " + this.repeatDesign + "px";
                 }
                 if ((x.type == "circle")) {
-                    this.generatedCss = this.generatedCss + "" + x.width + "" + x.widthMeasurement + " " + this.repeatDesign + "px";
+                    this.generatedCss = this.generatedCss + "" + x.diameter + "" + x.diameterMeasurement + " " + this.repeatDesign + "px";
                 }
 
                 /* Do a comma for the next one, or a semicolon for the last one START */
@@ -473,11 +514,11 @@ export class AppComponent implements OnInit {
                                 if ((x.type == "circle")) {
                                     if ((x.antialias == false))
                                     {
-                                        this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.width / 2 + "px at " + x.width / 2 + "px " + x.width / 2 + "px, " + x.color + " 99%, transparent 0 )";
+                                        this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.diameter / 2 + "px at " + x.diameter / 2 + "px " + x.diameter / 2 + "px, " + x.color + " 99%, transparent 0 )";
                                     }
                                     else
                                     {
-                                        this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.width / 2 + "px at " + x.width / 2 + "px " + x.width / 2 + "px, " + x.color + " " + (x.width / 2 - 1) + "px, transparent " + x.width / 2 + "px )";
+                                        this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.diameter / 2 + "px at " + x.diameter / 2 + "px " + x.diameter / 2 + "px, " + x.color + " " + (x.diameter / 2 - 1) + "px, transparent " + x.diameter / 2 + "px )";
                                     }
                                 }
 
@@ -501,7 +542,7 @@ export class AppComponent implements OnInit {
                                     this.generatedCss = this.generatedCss + "" + this.determineRectangleWidth(x) + " " + this.repeatDesign + "px";
                                 }
                                 if ((x.type == "circle")) {
-                                    this.generatedCss = this.generatedCss + "" + x.width + "" + x.widthMeasurement + " " + this.repeatDesign + "px";
+                                    this.generatedCss = this.generatedCss + "" + x.diameter + "" + x.diameterMeasurement + " " + this.repeatDesign + "px";
                                 }
 
                                 /* Do a comma for the next one, or a semicolon for the last one START */
@@ -553,11 +594,11 @@ export class AppComponent implements OnInit {
                                 if ((x.type == "circle")) {
                                     if ((x.antialias == false))
                                     {
-                                        this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.width / 2 + "px at " + x.width / 2 + "px " + x.width / 2 + "px, "+amendedShimmerColor2+" 99%, transparent 0 )";
+                                        this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.diameter / 2 + "px at " + x.diameter / 2 + "px " + x.diameter / 2 + "px, "+amendedShimmerColor2+" 99%, transparent 0 )";
                                     }
                                     else
                                     {
-                                        this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.width / 2 + "px at " + x.width / 2 + "px " + x.width / 2 + "px, "+amendedShimmerColor2+" " + (x.width / 2 - 1) + "px, transparent " + x.width / 2 + "px )";
+                                        this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.diameter / 2 + "px at " + x.diameter / 2 + "px " + x.diameter / 2 + "px, "+amendedShimmerColor2+" " + (x.diameter / 2 - 1) + "px, transparent " + x.diameter / 2 + "px )";
                                     }
                                 }
 
@@ -581,7 +622,7 @@ export class AppComponent implements OnInit {
                                     this.generatedCss = this.generatedCss + "" + this.determineRectangleWidth(x) + " " + this.repeatDesign + "px";
                                 }
                                 if ((x.type == "circle")) {
-                                    this.generatedCss = this.generatedCss + "" + x.width + "" + x.widthMeasurement + " " + this.repeatDesign + "px";
+                                    this.generatedCss = this.generatedCss + "" + x.diameter + "" + x.diameterMeasurement + " " + this.repeatDesign + "px";
                                 }
 
                                 /* Do a comma for the next one, or a semicolon for the last one START */
@@ -639,11 +680,11 @@ export class AppComponent implements OnInit {
                     if ((x.type == "circle")) {
                         if ((x.antialias == false))
                         {
-                            this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.width / 2 + "px at " + x.width / 2 + "px " + x.width / 2 + "px, " + x.color + " 99%, transparent 0 )";
+                            this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.diameter / 2 + "px at " + x.diameter / 2 + "px " + x.diameter / 2 + "px, " + x.color + " 99%, transparent 0 )";
                         }
                         else
                         {
-                            this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.width / 2 + "px at " + x.width / 2 + "px " + x.width / 2 + "px, " + x.color + " " + (x.width / 2 - 1) + "px, transparent " + x.width / 2 + "px )";
+                            this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.diameter / 2 + "px at " + x.diameter / 2 + "px " + x.diameter / 2 + "px, " + x.color + " " + (x.diameter / 2 - 1) + "px, transparent " + x.diameter / 2 + "px )";
                         }
                     }
 
@@ -667,7 +708,7 @@ export class AppComponent implements OnInit {
                         this.generatedCss = this.generatedCss + "" + this.determineRectangleWidth(x) + " " + this.repeatDesign + "px";
                     }
                     if ((x.type == "circle")) {
-                        this.generatedCss = this.generatedCss + "" + x.width + "" + x.widthMeasurement + " " + this.repeatDesign + "px";
+                        this.generatedCss = this.generatedCss + "" + x.diameter + "" + x.diameterMeasurement + " " + this.repeatDesign + "px";
                     }
 
                     /* Do a comma for the next one, or a semicolon for the last one START */
@@ -750,12 +791,17 @@ export class AppComponent implements OnInit {
     addCircle(position) {
         this.designData.push({
             "type": "circle",
-            "width": 28,
-            "widthMeasurement": "px",
+            "width": null,
+            "widthMeasurement": null,
             "widthCalc": null,
             "widthCalcAmount": null,
             "widthCalcUnit": null,
-            "height": 28,
+            "height": null,
+            "diameter": 28,
+            "diameterMeasurement": "px",
+            "diameterCalc": null,
+            "diameterCalcAmount": null,
+            "diameterCalcUnit": null,
             "color": this.newShapeColor,
             "x": position.x,
             "y": position.y,
@@ -778,6 +824,11 @@ export class AppComponent implements OnInit {
             "widthCalcAmount": null,
             "widthCalcUnit": null,
             "height": 20,
+            "diameter": null,
+            "diameterMeasurement": null,
+            "diameterCalc": null,
+            "diameterCalcAmount": null,
+            "diameterCalcUnit": null,
             "color": this.newShapeColor,
             "x": position.x,
             "y": position.y,
@@ -806,6 +857,11 @@ export class AppComponent implements OnInit {
         this.myForm.controls['widthCalcAmount'].patchValue(item.widthCalcAmount);
         this.myForm.controls['widthCalcUnit'].patchValue(item.widthCalcUnit);
         this.myForm.controls['height'].patchValue(item.height);
+        this.myForm.controls['diameter'].patchValue(item.diameter);
+        this.myForm.controls['diameterMeasurement'].patchValue(item.diameterMeasurement);
+        this.myForm.controls['diameterCalc'].patchValue(item.diameterCalc);
+        this.myForm.controls['diameterCalcAmount'].patchValue(item.diameterCalcAmount);
+        this.myForm.controls['diameterCalcUnit'].patchValue(item.diameterCalcUnit);
         this.myForm.controls['color'].patchValue(item.color);
         this.myForm.controls['x'].patchValue(item.x);
         this.myForm.controls['y'].patchValue(item.y);
