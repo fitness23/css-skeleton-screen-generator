@@ -431,21 +431,25 @@ export class AppComponent implements OnInit {
         }
 
 
+        let toWrite;
         
-        if ((record.heightCalc == "-")){
-            startingNumber = startingNumber - record.heightCalcAmount;
+        if ((record.heightCalc == null)){
+            return `${startingNumber}px`;
+        }
+        else if ((record.heightCalc == "-")){
+            toWrite = `calc(${startingNumber}px ${record.heightCalc} ${record.heightCalcAmount}${record.heightCalcUnit})`;
         }
         else if ((record.heightCalc == "+")){
-            startingNumber = startingNumber + record.heightCalcAmount;
+            toWrite = `calc(${startingNumber}px ${record.heightCalc} ${record.heightCalcAmount}${record.heightCalcUnit})`;
         }
         else if ((record.heightCalc == "*")){
-            startingNumber = startingNumber * record.heightCalcAmount;
+            toWrite = `calc(${startingNumber}px ${record.heightCalc} ${record.heightCalcAmount})`;
         }
         else if ((record.heightCalc == "/")){
-            startingNumber = startingNumber / record.heightCalcAmount;
+            toWrite = `calc(${startingNumber}px ${record.heightCalc} ${record.heightCalcAmount})`;
         }
 
-        return `${startingNumber}px`;
+        return toWrite;
         
     }
 
