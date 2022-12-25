@@ -21,7 +21,7 @@
           <div class="itemContainer" [ngClass]="{'active' : i == highlightedItem}">
               <div class="item" [ngStyle]="{'background-color': item.color, 'width': item.width+item.widthMeasurement, 'height': item.height+'px', 'border-radius': item.width+'px', 'left': item.x+'px', 'top': item.y+'px', 'border-radius': item.type == 'circle' ? item.width+'px' : 0+'px'}" (click)="highlightItem(i,item)">
                 <div class="inner">
-                  <div class="delete" (click)="deleteItem(i)">X</div>
+                  <!--<div class="delete" (click)="deleteItem(i)">X</div>--> <!-- This is the old delete button, now users just delete by pressing the delete key -->
                 </div>
               </div>
           </div>

@@ -141,8 +141,11 @@ export class AppComponent implements OnInit {
 
         if ((event.key === 'Delete'))
         {
-            if ((this.highlightedItem == null))
+            if ((this.highlightedItem != null))
             {
+                this.deleteItem(this.highlightedItem);
+            }
+            else{
                 this.designCanvasTempBackgroundImage = null;
             }
         }
