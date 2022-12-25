@@ -57,8 +57,11 @@ export class AppComponent implements OnInit {
         this.randomSkeletonName = this.generateRandomSkeletonName();
 
         this.myForm = this.fb.group({
-            widthMeasurement: [null],
             width: [null],
+            widthMeasurement: [null],
+            widthCalc: [null],
+            widthCalcAmount: [null],
+            widthCalcUnit: [null],
             height: [null],
             color: [null],
             x: [null],
@@ -247,8 +250,11 @@ export class AppComponent implements OnInit {
 
 
     sendValuesBackToArray() {
-        this.designData[this.highlightedItem].widthMeasurement = this.myForm.value.widthMeasurement;
         this.designData[this.highlightedItem].width = this.myForm.value.width;
+        this.designData[this.highlightedItem].widthMeasurement = this.myForm.value.widthMeasurement;
+        this.designData[this.highlightedItem].widthCalc = this.myForm.value.widthCalc;
+        this.designData[this.highlightedItem].widthCalcAmount = this.myForm.value.widthCalcAmount;
+        this.designData[this.highlightedItem].widthCalcUnit = this.myForm.value.widthCalcUnit;
         this.designData[this.highlightedItem].height = this.myForm.value.height;
         this.designData[this.highlightedItem].color = this.myForm.value.color;
         this.designData[this.highlightedItem].x = this.myForm.value.x;
@@ -264,6 +270,31 @@ export class AppComponent implements OnInit {
         if ((this.myForm.value.widthMeasurement == "%"))
         {
             this.myForm.controls['width'].patchValue(50);
+        }
+    }
+
+    widthCalcChanged() {
+        
+        if ((this.myForm.value.widthCalc == null))
+        {
+            this.myForm.controls['widthCalcAmount'].patchValue(null);
+            this.myForm.controls['widthCalcUnit'].patchValue(null);
+        }
+        else if ((this.myForm.value.widthCalc == "-")){
+            this.myForm.controls['widthCalcAmount'].patchValue(0);
+            this.myForm.controls['widthCalcUnit'].patchValue('px');
+        }
+        else if ((this.myForm.value.widthCalc == "+")){
+            this.myForm.controls['widthCalcAmount'].patchValue(0);
+            this.myForm.controls['widthCalcUnit'].patchValue('px');
+        }
+        else if ((this.myForm.value.widthCalc == "*")){
+            this.myForm.controls['widthCalcAmount'].patchValue(1);
+            this.myForm.controls['widthCalcUnit'].patchValue(null);
+        }
+        else if ((this.myForm.value.widthCalc == "/")){
+            this.myForm.controls['widthCalcAmount'].patchValue(1);
+            this.myForm.controls['widthCalcUnit'].patchValue(null);
         }
     }
 
@@ -286,6 +317,25 @@ export class AppComponent implements OnInit {
             result += characters.charAt(Math.floor(Math.random() * charactersLength));
         }
         return result;
+    }
+
+
+    determineRectangleWidth(record){
+        if ((record.widthCalc == null)){
+            return record.width + record.widthMeasurement;
+        }
+        else if ((record.widthCalc == "-")){
+            return `calc(${record.width}${record.widthMeasurement} ${record.widthCalc} ${record.widthCalcAmount}${record.widthCalcUnit})`;
+        }
+        else if ((record.widthCalc == "+")){
+            return `calc(${record.width}${record.widthMeasurement} ${record.widthCalc} ${record.widthCalcAmount}${record.widthCalcUnit})`;
+        }
+        else if ((record.widthCalc == "*")){
+            return `calc(${record.width}${record.widthMeasurement} ${record.widthCalc} ${record.widthCalcAmount})`;
+        }
+        else if ((record.widthCalc == "/")){
+            return `calc(${record.width}${record.widthMeasurement} ${record.widthCalc} ${record.widthCalcAmount})`;
+        }
     }
 
 
@@ -351,7 +401,7 @@ export class AppComponent implements OnInit {
 
             designDataReversed.forEach((x, index) => {
                 if ((x.type == "rectangle")) {
-                    this.generatedCss = this.generatedCss + "" + x.width + "" + x.widthMeasurement + " " + this.repeatDesign + "px";
+                    this.generatedCss = this.generatedCss + "" + this.determineRectangleWidth(x) + " " + this.repeatDesign + "px";
                 }
                 if ((x.type == "circle")) {
                     this.generatedCss = this.generatedCss + "" + x.width + "" + x.widthMeasurement + " " + this.repeatDesign + "px";
@@ -448,7 +498,7 @@ export class AppComponent implements OnInit {
 
                             designDataReversed.forEach((x, index) => {
                                 if ((x.type == "rectangle")) {
-                                    this.generatedCss = this.generatedCss + "" + x.width + "" + x.widthMeasurement + " " + this.repeatDesign + "px";
+                                    this.generatedCss = this.generatedCss + "" + this.determineRectangleWidth(x) + " " + this.repeatDesign + "px";
                                 }
                                 if ((x.type == "circle")) {
                                     this.generatedCss = this.generatedCss + "" + x.width + "" + x.widthMeasurement + " " + this.repeatDesign + "px";
@@ -528,7 +578,7 @@ export class AppComponent implements OnInit {
 
                             designDataReversed.forEach((x, index) => {
                                 if ((x.type == "rectangle")) {
-                                    this.generatedCss = this.generatedCss + "" + x.width + "" + x.widthMeasurement + " " + this.repeatDesign + "px";
+                                    this.generatedCss = this.generatedCss + "" + this.determineRectangleWidth(x) + " " + this.repeatDesign + "px";
                                 }
                                 if ((x.type == "circle")) {
                                     this.generatedCss = this.generatedCss + "" + x.width + "" + x.widthMeasurement + " " + this.repeatDesign + "px";
@@ -614,7 +664,7 @@ export class AppComponent implements OnInit {
 
                 designDataReversed.forEach((x, index) => {
                     if ((x.type == "rectangle")) {
-                        this.generatedCss = this.generatedCss + "" + x.width + "" + x.widthMeasurement + " " + this.repeatDesign + "px";
+                        this.generatedCss = this.generatedCss + "" + this.determineRectangleWidth(x) + " " + this.repeatDesign + "px";
                     }
                     if ((x.type == "circle")) {
                         this.generatedCss = this.generatedCss + "" + x.width + "" + x.widthMeasurement + " " + this.repeatDesign + "px";
@@ -702,6 +752,9 @@ export class AppComponent implements OnInit {
             "type": "circle",
             "width": 28,
             "widthMeasurement": "px",
+            "widthCalc": null,
+            "widthCalcAmount": null,
+            "widthCalcUnit": null,
             "height": 28,
             "color": this.newShapeColor,
             "x": position.x,
@@ -721,6 +774,9 @@ export class AppComponent implements OnInit {
             "type": "rectangle",
             "width": 300,
             "widthMeasurement": "px",
+            "widthCalc": null,
+            "widthCalcAmount": null,
+            "widthCalcUnit": null,
             "height": 20,
             "color": this.newShapeColor,
             "x": position.x,
@@ -744,8 +800,11 @@ export class AppComponent implements OnInit {
 
         this.highlightedItem = index;
 
-        this.myForm.controls['widthMeasurement'].patchValue(item.widthMeasurement);
         this.myForm.controls['width'].patchValue(item.width);
+        this.myForm.controls['widthMeasurement'].patchValue(item.widthMeasurement);
+        this.myForm.controls['widthCalc'].patchValue(item.widthCalc);
+        this.myForm.controls['widthCalcAmount'].patchValue(item.widthCalcAmount);
+        this.myForm.controls['widthCalcUnit'].patchValue(item.widthCalcUnit);
         this.myForm.controls['height'].patchValue(item.height);
         this.myForm.controls['color'].patchValue(item.color);
         this.myForm.controls['x'].patchValue(item.x);

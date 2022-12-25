@@ -19,7 +19,7 @@
       <div (clickOutside)="onClickedOutside($event)">
         <ng-container *ngFor="let item of designData; let i=index">
           <div class="itemContainer" [ngClass]="{'active' : i == highlightedItem}">
-              <div class="item" [ngStyle]="{'background-color': item.color, 'width': item.width+item.widthMeasurement, 'height': item.height+'px', 'border-radius': item.width+'px', 'left': item.x+'px', 'top': item.y+'px', 'border-radius': item.type == 'circle' ? item.width+'px' : 0+'px'}" (click)="highlightItem(i,item)">
+              <div class="item" [ngStyle]="{'background-color': item.color, 'height': item.height+'px', 'left': item.x+'px', 'top': item.y+'px', 'border-radius': item.type == 'circle' ? item.width+'px' : 0+'px', 'width': item.type == 'circle' ? item.width+item.widthMeasurement : determineRectangleWidth(item)}" (click)="highlightItem(i,item)">
                 <div class="inner">
                   <!--<div class="delete" (click)="deleteItem(i)">X</div>--> <!-- This is the old delete button, now users just delete by pressing the delete key -->
                 </div>
@@ -59,24 +59,91 @@
                   <label>y</label>
                   <input type="number" formControlName="y" />
                 </div>
-                <div class="block" *ngIf="selectedType == 'rectangle'">
-                  <label>width</label>
-                  <input type="number" formControlName="width" />
-                  <select formControlName="widthMeasurement" (change)="measurementChanged()">
-                    <option [ngValue]="'px'">px</option>
-                    <option [ngValue]="'%'">%</option>
-                  </select>
-                </div>
                 
-                <div class="block" *ngIf="selectedType == 'circle'">
-                  <label>Diameter</label>
-                  <input type="number" formControlName="width" (keyup)="syncHeight()" (change)="syncHeight()" /> px
-                </div>
+                
+                
                 <div class="block" *ngIf="selectedType == 'rectangle'">
                   <label>Height</label>
                   <input type="number" formControlName="height" /> px
                 </div>
                 
+              </div>
+            </li>
+
+            <li class="itemCoreDetails" *ngIf="selectedType == 'rectangle'">
+              <div>Width</div>
+              <div class="itemCoreDetailsContainer">
+                <div class="block">
+                  <label>Amount</label>
+                  <input type="number" formControlName="width" />
+                </div>
+                <div class="block">
+                  <label>Unit</label>
+                  <select formControlName="widthMeasurement" (change)="measurementChanged()">
+                    <option [ngValue]="'px'">px</option>
+                    <option [ngValue]="'%'">%</option>
+                  </select>
+                </div>
+                <div class="block">
+                  <label>Calc</label>
+                  <select formControlName="widthCalc" (change)="widthCalcChanged()">
+                    <option [ngValue]="null">None</option>
+                    <option [ngValue]="'-'">-</option>
+                    <option [ngValue]="'+'">+</option>
+                    <option [ngValue]="'*'">*</option>
+                    <option [ngValue]="'/'">/</option>
+                  </select>
+                </div>
+                  <div class="block" *ngIf="myForm.controls.widthCalc.value != null">
+                    <label>Amount</label>
+                    <input type="number" formControlName="widthCalcAmount" />
+                  </div>
+                  <div class="block" *ngIf="(myForm.controls.widthCalc.value != null) && ((myForm.controls.widthCalc.value === '-') || (myForm.controls.widthCalc.value === '+'))">
+                    <label>Unit</label>
+                    <select formControlName="widthCalcUnit">
+                      <option [ngValue]="'px'">px</option>
+                      <option [ngValue]="'%'">%</option>
+                      <option [ngValue]="'rem'">rem</option>
+                      <option [ngValue]="'em'">em</option>
+                    </select>
+                  </div>
+              </div>
+            </li>
+
+            <li class="itemCoreDetails" *ngIf="selectedType == 'circle'">
+              <div>Diameter</div>
+              <div class="itemCoreDetailsContainer">
+                <div class="block">
+                  <label>Amount</label>
+                  <input type="number" formControlName="width" (keyup)="syncHeight()" (change)="syncHeight()" />
+                </div>
+                <div class="block">
+                  <label>Unit</label>
+                  <div>px</div>
+                </div>
+                <div class="block">
+                  <label>Calc</label>
+                  <select formControlName="widthCalc" (change)="widthCalcChanged()">
+                    <option [ngValue]="null">None</option>
+                    <option [ngValue]="'-'">-</option>
+                    <option [ngValue]="'+'">+</option>
+                    <option [ngValue]="'*'">*</option>
+                    <option [ngValue]="'/'">/</option>
+                  </select>
+                </div>
+                  <div class="block" *ngIf="myForm.controls.widthCalc.value != null">
+                    <label>Amount</label>
+                    <input type="number" formControlName="widthCalcAmount" />
+                  </div>
+                  <div class="block" *ngIf="(myForm.controls.widthCalc.value != null) && ((myForm.controls.widthCalc.value === '-') || (myForm.controls.widthCalc.value === '+'))">
+                    <label>Unit</label>
+                    <select formControlName="widthCalcUnit">
+                      <option [ngValue]="'px'">px</option>
+                      <option [ngValue]="'%'">%</option>
+                      <option [ngValue]="'rem'">rem</option>
+                      <option [ngValue]="'em'">em</option>
+                    </select>
+                  </div>
               </div>
             </li>
 
