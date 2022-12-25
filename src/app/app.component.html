@@ -19,7 +19,7 @@
       <div (clickOutside)="onClickedOutside($event)">
         <ng-container *ngFor="let item of designData; let i=index">
           <div class="itemContainer" [ngClass]="{'active' : i == highlightedItem}">
-              <div class="item" [ngStyle]="{'background-color': item.color, 'left': item.x+'px', 'top': item.y+'px', 'border-radius': item.type == 'circle' ? item.diameter+'px' : 0+'px', 'width': item.type == 'circle' ? item.diameter+item.diameterMeasurement : determineRectangleWidth(item), 'height': item.type == 'circle' ? item.diameter+'px' : item.height+'px'}" (click)="highlightItem(i,item)">
+              <div class="item" [ngStyle]="{'background-color': item.color, 'left': item.x+'px', 'top': item.y+'px', 'border-radius': item.type == 'circle' ? item.diameter+'px' : 0+'px', 'width': item.type == 'circle' ? item.diameter+item.diameterMeasurement : determineRectangleWidth(item), 'height': item.type == 'circle' ? item.diameter+'px' : determineRectangleHeightDesignView(item)}" (click)="highlightItem(i,item)">
                 <div class="inner">
                   <!--<div class="delete" (click)="deleteItem(i)">X</div>--> <!-- This is the old delete button, now users just delete by pressing the delete key -->
                 </div>
@@ -59,19 +59,11 @@
                   <label>y</label>
                   <input type="number" formControlName="y" />
                 </div>
-                
-                
-                
-                <div class="block" *ngIf="selectedType == 'rectangle'">
-                  <label>Height</label>
-                  <input type="number" formControlName="height" /> px
-                </div>
-                
               </div>
             </li>
 
             <li class="itemCoreDetails" *ngIf="selectedType == 'rectangle'">
-              <div>Width</div>
+              <div class="itemHeading">Width</div>
               <div class="itemCoreDetailsContainer">
                 <div class="block">
                   <label>Amount</label>
@@ -79,7 +71,7 @@
                 </div>
                 <div class="block">
                   <label>Unit</label>
-                  <select formControlName="widthMeasurement" (change)="measurementChanged()">
+                  <select formControlName="widthMeasurement" (change)="widthMeasurementChanged()">
                     <option [ngValue]="'px'">px</option>
                     <option [ngValue]="'%'">%</option>
                   </select>
@@ -110,8 +102,48 @@
               </div>
             </li>
 
+            <li class="itemCoreDetails" *ngIf="selectedType == 'rectangle'">
+              <div class="itemHeading">Height</div>
+              <div class="itemCoreDetailsContainer">
+                <div class="block">
+                  <label>Amount</label>
+                  <input type="number" formControlName="height" />
+                </div>
+                <div class="block">
+                  <label>Unit</label>
+                  <select formControlName="heightMeasurement" (change)="heightMeasurementChanged()">
+                    <option [ngValue]="'px'">px</option>
+                    <option [ngValue]="'%'">%</option>
+                  </select>
+                </div>
+                <div class="block">
+                  <label>Calc</label>
+                  <select formControlName="heightCalc" (change)="heightCalcChanged()">
+                    <option [ngValue]="null">None</option>
+                    <option [ngValue]="'-'">-</option>
+                    <option [ngValue]="'+'">+</option>
+                    <option [ngValue]="'*'">*</option>
+                    <option [ngValue]="'/'">/</option>
+                  </select>
+                </div>
+                  <div class="block" *ngIf="myForm.controls.heightCalc.value != null">
+                    <label>Amount</label>
+                    <input type="number" formControlName="heightCalcAmount" />
+                  </div>
+                  <div class="block" *ngIf="(myForm.controls.heightCalc.value != null) && ((myForm.controls.heightCalc.value === '-') || (myForm.controls.heightCalc.value === '+'))">
+                    <label>Unit</label>
+                    <select formControlName="heightCalcUnit">
+                      <option [ngValue]="'px'">px</option>
+                      <option [ngValue]="'%'">%</option>
+                      <option [ngValue]="'rem'">rem</option>
+                      <option [ngValue]="'em'">em</option>
+                    </select>
+                  </div>
+              </div>
+            </li>
+
             <li class="itemCoreDetails" *ngIf="selectedType == 'circle'">
-              <div>Diameter</div>
+              <div class="itemHeading">Diameter</div>
               <div class="itemCoreDetailsContainer">
                 <div class="block">
                   <label>Amount</label>
@@ -121,6 +153,7 @@
                   <label>Unit</label>
                   <div>px</div>
                 </div>
+                <!--
                 <div class="block">
                   <label>Calc</label>
                   <select formControlName="diameterCalc" (change)="diameterCalcChanged()">
@@ -144,6 +177,7 @@
                       <option [ngValue]="'em'">em</option>
                     </select>
                   </div>
+                  -->
               </div>
             </li>
 

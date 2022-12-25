@@ -63,6 +63,10 @@ export class AppComponent implements OnInit {
             widthCalcAmount: [null],
             widthCalcUnit: [null],
             height: [null],
+            heightMeasurement: [null],
+            heightCalc: [null],
+            heightCalcAmount: [null],
+            heightCalcUnit: [null],
             diameter: [null],
             diameterMeasurement: [null],
             diameterCalc: [null],
@@ -262,6 +266,10 @@ export class AppComponent implements OnInit {
         this.designData[this.highlightedItem].widthCalcUnit = this.myForm.value.widthCalcUnit;
 
         this.designData[this.highlightedItem].height = this.myForm.value.height;
+        this.designData[this.highlightedItem].heightMeasurement = this.myForm.value.heightMeasurement;
+        this.designData[this.highlightedItem].heightCalc = this.myForm.value.heightCalc;
+        this.designData[this.highlightedItem].heightCalcAmount = this.myForm.value.heightCalcAmount;
+        this.designData[this.highlightedItem].heightCalcUnit = this.myForm.value.heightCalcUnit;
 
         this.designData[this.highlightedItem].diameter = this.myForm.value.diameter;
         this.designData[this.highlightedItem].diameterMeasurement = this.myForm.value.diameterMeasurement;
@@ -278,7 +286,7 @@ export class AppComponent implements OnInit {
         this.generate();
     }
 
-    measurementChanged() {
+    widthMeasurementChanged() {
         
         if ((this.myForm.value.widthMeasurement == "%"))
         {
@@ -308,6 +316,39 @@ export class AppComponent implements OnInit {
         else if ((this.myForm.value.widthCalc == "/")){
             this.myForm.controls['widthCalcAmount'].patchValue(1);
             this.myForm.controls['widthCalcUnit'].patchValue(null);
+        }
+    }
+
+    heightMeasurementChanged() {
+        
+        if ((this.myForm.value.heightMeasurement == "%"))
+        {
+            this.myForm.controls['height'].patchValue(5);
+        }
+    }
+
+    heightCalcChanged() {
+        
+        if ((this.myForm.value.heightCalc == null))
+        {
+            this.myForm.controls['heightCalcAmount'].patchValue(null);
+            this.myForm.controls['heightCalcUnit'].patchValue(null);
+        }
+        else if ((this.myForm.value.heightCalc == "-")){
+            this.myForm.controls['heightCalcAmount'].patchValue(0);
+            this.myForm.controls['heightCalcUnit'].patchValue('px');
+        }
+        else if ((this.myForm.value.heightCalc == "+")){
+            this.myForm.controls['heightCalcAmount'].patchValue(0);
+            this.myForm.controls['heightCalcUnit'].patchValue('px');
+        }
+        else if ((this.myForm.value.heightCalc == "*")){
+            this.myForm.controls['heightCalcAmount'].patchValue(1);
+            this.myForm.controls['heightCalcUnit'].patchValue(null);
+        }
+        else if ((this.myForm.value.heightCalc == "/")){
+            this.myForm.controls['heightCalcAmount'].patchValue(1);
+            this.myForm.controls['heightCalcUnit'].patchValue(null);
         }
     }
 
@@ -377,6 +418,54 @@ export class AppComponent implements OnInit {
             return `calc(${record.width}${record.widthMeasurement} ${record.widthCalc} ${record.widthCalcAmount})`;
         }
     }
+
+    determineRectangleHeightDesignView(record){
+
+        let startingNumber;
+
+        if ((record.heightMeasurement === "px")){
+            startingNumber = record.height;
+        }
+        else {
+            startingNumber = (record.height * this.repeatDesign) / 100;
+        }
+
+
+        
+        if ((record.heightCalc == "-")){
+            startingNumber = startingNumber - record.heightCalcAmount;
+        }
+        else if ((record.heightCalc == "+")){
+            startingNumber = startingNumber + record.heightCalcAmount;
+        }
+        else if ((record.heightCalc == "*")){
+            startingNumber = startingNumber * record.heightCalcAmount;
+        }
+        else if ((record.heightCalc == "/")){
+            startingNumber = startingNumber / record.heightCalcAmount;
+        }
+
+        return `${startingNumber}px`;
+        
+    }
+
+    determineRectangleHeightResultView(record){
+        if ((record.heightCalc == null)){
+            return record.height + record.heightMeasurement;
+        }
+        else if ((record.heightCalc == "-")){
+            return `calc(${record.height}${record.heightMeasurement} ${record.heightCalc} ${record.heightCalcAmount}${record.heightCalcUnit})`;
+        }
+        else if ((record.heightCalc == "+")){
+            return `calc(${record.height}${record.heightMeasurement} ${record.heightCalc} ${record.heightCalcAmount}${record.heightCalcUnit})`;
+        }
+        else if ((record.heightCalc == "*")){
+            return `calc(${record.height}${record.heightMeasurement} ${record.heightCalc} ${record.heightCalcAmount})`;
+        }
+        else if ((record.heightCalc == "/")){
+            return `calc(${record.height}${record.heightMeasurement} ${record.heightCalc} ${record.heightCalcAmount})`;
+        }
+    }
     
 
 
@@ -412,7 +501,7 @@ export class AppComponent implements OnInit {
                 if ((x.type == "rectangle"))
                 {
                     // Since rectangles are only straight angles we can't do an antialias option anyway
-                    this.generatedCss = this.generatedCss + "linear-gradient( "+x.color+" "+x.height+"px, transparent 0 )";
+                    this.generatedCss = this.generatedCss + "linear-gradient( "+x.color+" "+this.determineRectangleHeightResultView(x)+", transparent 0 )";
                 }
                 if ((x.type == "circle")) {
                     if ((x.antialias == false))
@@ -509,7 +598,7 @@ export class AppComponent implements OnInit {
                                 if ((x.type == "rectangle"))
                                 {
                                     // Since rectangles are only straight angles we can't do an antialias option anyway
-                                    this.generatedCss = this.generatedCss + "linear-gradient( "+x.color+" "+x.height+"px, transparent 0 )";
+                                    this.generatedCss = this.generatedCss + "linear-gradient( "+x.color+" "+this.determineRectangleHeightResultView(x)+", transparent 0 )";
                                 }
                                 if ((x.type == "circle")) {
                                     if ((x.antialias == false))
@@ -589,7 +678,7 @@ export class AppComponent implements OnInit {
                                 if ((x.type == "rectangle"))
                                 {
                                     // Since rectangles are only straight angles we can't do an antialias option anyway
-                                    this.generatedCss = this.generatedCss + "linear-gradient( "+amendedShimmerColor2+" "+x.height+"px, transparent 0 )";
+                                    this.generatedCss = this.generatedCss + "linear-gradient( "+amendedShimmerColor2+" "+this.determineRectangleHeightResultView(x)+", transparent 0 )";
                                 }
                                 if ((x.type == "circle")) {
                                     if ((x.antialias == false))
@@ -675,7 +764,7 @@ export class AppComponent implements OnInit {
                     if ((x.type == "rectangle"))
                     {
                         // Since rectangles are only straight angles we can't do an antialias option anyway
-                        this.generatedCss = this.generatedCss + "linear-gradient( "+x.color+" "+x.height+"px, transparent 0 )";
+                        this.generatedCss = this.generatedCss + "linear-gradient( "+x.color+" "+this.determineRectangleHeightResultView(x)+", transparent 0 )";
                     }
                     if ((x.type == "circle")) {
                         if ((x.antialias == false))
@@ -797,6 +886,10 @@ export class AppComponent implements OnInit {
             "widthCalcAmount": null,
             "widthCalcUnit": null,
             "height": null,
+            "heightMeasurement": null,
+            "heightCalc": null,
+            "heightCalcAmount": null,
+            "heightCalcUnit": null,
             "diameter": 28,
             "diameterMeasurement": "px",
             "diameterCalc": null,
@@ -824,6 +917,10 @@ export class AppComponent implements OnInit {
             "widthCalcAmount": null,
             "widthCalcUnit": null,
             "height": 20,
+            "heightMeasurement": "px",
+            "heightCalc": null,
+            "heightCalcAmount": null,
+            "heightCalcUnit": null,
             "diameter": null,
             "diameterMeasurement": null,
             "diameterCalc": null,
@@ -857,6 +954,10 @@ export class AppComponent implements OnInit {
         this.myForm.controls['widthCalcAmount'].patchValue(item.widthCalcAmount);
         this.myForm.controls['widthCalcUnit'].patchValue(item.widthCalcUnit);
         this.myForm.controls['height'].patchValue(item.height);
+        this.myForm.controls['heightMeasurement'].patchValue(item.heightMeasurement);
+        this.myForm.controls['heightCalc'].patchValue(item.heightCalc);
+        this.myForm.controls['heightCalcAmount'].patchValue(item.heightCalcAmount);
+        this.myForm.controls['heightCalcUnit'].patchValue(item.heightCalcUnit);
         this.myForm.controls['diameter'].patchValue(item.diameter);
         this.myForm.controls['diameterMeasurement'].patchValue(item.diameterMeasurement);
         this.myForm.controls['diameterCalc'].patchValue(item.diameterCalc);

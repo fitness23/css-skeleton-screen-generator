@@ -742,7 +742,9 @@ select {
 
     li.itemCoreDetails {
 
-
+      .itemHeading{
+        font-weight: bold;
+      }
 
       .itemCoreDetailsContainer {
         display: table;
