@@ -74,7 +74,7 @@
                 <ng-container *ngIf="myForm.controls.horizontalPositioningStartingPoint.value != 'center'">
                   <div class="block">
                     <label>Amount</label>
-                    <input type="number" formControlName="horizontalPositioningAmount" />
+                    <input type="number" min="0" formControlName="horizontalPositioningAmount" />
                   </div>
                   <div class="block">
                     <label>Unit</label>
@@ -105,7 +105,7 @@
                 <ng-container *ngIf="myForm.controls.verticalPositioningStartingPoint.value != 'center'">
                   <div class="block">
                     <label>Amount</label>
-                    <input type="number" formControlName="verticalPositioningAmount" />
+                    <input type="number" min="0" formControlName="verticalPositioningAmount" />
                   </div>
                   <div class="block">
                     <label>Unit</label>
@@ -127,7 +127,7 @@
               <div class="itemCoreDetailsContainer">
                 <div class="block">
                   <label>Amount</label>
-                  <input type="number" formControlName="width" />
+                  <input type="number" min="0" formControlName="width" />
                 </div>
                 <div class="block">
                   <label>Unit</label>
@@ -148,7 +148,7 @@
                 </div>
                   <div class="block" *ngIf="myForm.controls.widthCalc.value != null">
                     <label>Amount</label>
-                    <input type="number" formControlName="widthCalcAmount" />
+                    <input type="number" min="0" formControlName="widthCalcAmount" />
                   </div>
                   <div class="block" *ngIf="(myForm.controls.widthCalc.value != null) && ((myForm.controls.widthCalc.value === '-') || (myForm.controls.widthCalc.value === '+'))">
                     <label>Unit</label>
@@ -167,7 +167,7 @@
               <div class="itemCoreDetailsContainer">
                 <div class="block">
                   <label>Amount</label>
-                  <input type="number" formControlName="height" />
+                  <input type="number" min="0" formControlName="height" />
                 </div>
                 <div class="block">
                   <label>Unit</label>
@@ -188,7 +188,7 @@
                 </div>
                   <div class="block" *ngIf="myForm.controls.heightCalc.value != null">
                     <label>Amount</label>
-                    <input type="number" formControlName="heightCalcAmount" />
+                    <input type="number" min="0" formControlName="heightCalcAmount" />
                   </div>
                   <div class="block" *ngIf="(myForm.controls.heightCalc.value != null) && ((myForm.controls.heightCalc.value === '-') || (myForm.controls.heightCalc.value === '+'))">
                     <label>Unit</label>
@@ -207,7 +207,7 @@
               <div class="itemCoreDetailsContainer">
                 <div class="block">
                   <label>Amount</label>
-                  <input type="number" formControlName="diameter" (keyup)="syncHeight()" (change)="syncHeight()" />
+                  <input type="number" min="0" formControlName="diameter" (keyup)="syncHeight()" (change)="syncHeight()" />
                 </div>
                 <div class="block">
                   <label>Unit</label>
@@ -226,7 +226,7 @@
                 </div>
                   <div class="block" *ngIf="myForm.controls.diameterCalc.value != null">
                     <label>Amount</label>
-                    <input type="number" formControlName="diameterCalcAmount" />
+                    <input type="number" min="0" formControlName="diameterCalcAmount" />
                   </div>
                   <div class="block" *ngIf="(myForm.controls.diameterCalc.value != null) && ((myForm.controls.diameterCalc.value === '-') || (myForm.controls.diameterCalc.value === '+'))">
                     <label>Unit</label>
@@ -290,11 +290,11 @@
           </div>
           <div class="block">
             <label>Height</label>
-            <input type="number" [(ngModel)]="canvasHeight" (change)="generate()" (keyup)="generate()" />
+            <input type="number" min="0" [(ngModel)]="canvasHeight" (change)="generate()" (keyup)="generate()" />
           </div>
           <div class="block">
             <label>Repeat Design</label>
-            <input type="number" [(ngModel)]="repeatDesign" (change)="generate()" (keyup)="generate()" />
+            <input type="number" min="0" [(ngModel)]="repeatDesign" (change)="generate()" (keyup)="generate()" />
           </div>
         </div>
       </li>
@@ -303,19 +303,19 @@
         <div class="options">
           <div class="block">
             <label>Top Left</label>
-            <input type="number" [(ngModel)]="canvasBorderRadiusTopLeft" (change)="generate()" (keyup)="generate()" />
+            <input type="number" min="0" [(ngModel)]="canvasBorderRadiusTopLeft" (change)="generate()" (keyup)="generate()" />
           </div>
           <div class="block">
             <label>Top Right</label>
-            <input type="number" [(ngModel)]="canvasBorderRadiusTopRight" (change)="generate()" (keyup)="generate()" />
+            <input type="number" min="0" [(ngModel)]="canvasBorderRadiusTopRight" (change)="generate()" (keyup)="generate()" />
           </div>
           <div class="block">
             <label>Bottom Right</label>
-            <input type="number" [(ngModel)]="canvasBorderRadiusBottomRight" (change)="generate()" (keyup)="generate()" />
+            <input type="number" min="0" [(ngModel)]="canvasBorderRadiusBottomRight" (change)="generate()" (keyup)="generate()" />
           </div>
           <div class="block">
             <label>Bottom Left</label>
-            <input type="number" [(ngModel)]="canvasBorderRadiusBottomLeft" (change)="generate()" (keyup)="generate()" />
+            <input type="number" min="0" [(ngModel)]="canvasBorderRadiusBottomLeft" (change)="generate()" (keyup)="generate()" />
           </div>
         </div>
       </li>
@@ -332,7 +332,7 @@
           </div>
           <div class="block">
             <label>Duration</label>
-            <input type="number" [(ngModel)]="playShimmerDuration" (change)="generate()" (keyup)="generate()" min="0.5" step="0.1" />
+            <input type="number" min="0" [(ngModel)]="playShimmerDuration" (change)="generate()" (keyup)="generate()" min="0.5" step="0.1" />
           </div>
           <div class="block" style="position: relative;">
             <label>Color</label>
