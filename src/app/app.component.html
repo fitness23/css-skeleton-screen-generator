@@ -44,11 +44,15 @@
   </div>
 </div>
 <div id="designTools">
-  <div class="paneLabel light">Tools</div>
-  <div class="newShapeColor">
-    <label>New Shape Color</label>
-    <div class="colorToChoose" [(colorPicker)]="newShapeColor" [style.background]="newShapeColor" [cpPosition]="'bottom-left'" [cpWidth]="'200'"></div>
+  <div class="paneLabel light">
+    <div class="designToolsPaneLabel">Tools</div>
+
+    <div class="newShapeColor">
+      <label>New Shape Color</label>
+      <div class="colorToChoose" [(colorPicker)]="newShapeColor" [style.background]="newShapeColor" [cpPosition]="'bottom-left'" [cpWidth]="'200'"></div>
+    </div>
   </div>
+  
 
   <div id="tools">
 

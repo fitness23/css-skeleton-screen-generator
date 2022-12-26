@@ -957,8 +957,12 @@ export class AppComponent implements OnInit {
             "diameterCalcAmount": null,
             "diameterCalcUnit": null,
             "color": this.newShapeColor,
-            "x": position.x,
-            "y": position.y,
+            "horizontalPositioningStartingPoint": "left",
+            "horizontalPositioningAmount": position.x,
+            "horizontalPositioningUnit": "px",
+            "verticalPositioningStartingPoint": "top",
+            "verticalPositioningAmount": position.y,
+            "verticalPositioningUnit": "px",
             "allowShimmerOverlay": true,
             "antialias": true
         });
@@ -988,8 +992,12 @@ export class AppComponent implements OnInit {
             "diameterCalcAmount": null,
             "diameterCalcUnit": null,
             "color": this.newShapeColor,
-            "x": position.x,
-            "y": position.y,
+            "horizontalPositioningStartingPoint": "left",
+            "horizontalPositioningAmount": position.x,
+            "horizontalPositioningUnit": "px",
+            "verticalPositioningStartingPoint": "top",
+            "verticalPositioningAmount": position.y,
+            "verticalPositioningUnit": "px",
             "allowShimmerOverlay": true,
             "antialias": true
         });
