@@ -73,8 +73,12 @@ export class AppComponent implements OnInit {
             diameterCalcAmount: [null],
             diameterCalcUnit: [null],
             color: [null],
-            x: [null],
-            y: [null],
+            horizontalPositioningStartingPoint: [null],
+            horizontalPositioningAmount: [null],
+            horizontalPositioningUnit: [null],
+            verticalPositioningStartingPoint: [null],
+            verticalPositioningAmount: [null],
+            verticalPositioningUnit: [null],
             allowShimmerOverlay: [null],
             antialias: [null]
         });
@@ -100,7 +104,7 @@ export class AppComponent implements OnInit {
 
                 if ((this.highlightedItem != null))
                 {
-                    this.myForm.controls.x.patchValue(this.myForm.controls.x.value-1);
+                    this.myForm.controls.horizontalPositioningAmount.patchValue(this.myForm.controls.horizontalPositioningAmount.value-1);
                 }
                 else
                 {
@@ -114,7 +118,7 @@ export class AppComponent implements OnInit {
 
                 if ((this.highlightedItem != null))
                 {
-                    this.myForm.controls.x.patchValue(this.myForm.controls.x.value+1);
+                    this.myForm.controls.horizontalPositioningAmount.patchValue(this.myForm.controls.horizontalPositioningAmount.value+1);
                 }
                 else
                 {
@@ -128,7 +132,7 @@ export class AppComponent implements OnInit {
 
                 if ((this.highlightedItem != null))
                 {
-                    this.myForm.controls.y.patchValue(this.myForm.controls.y.value-1);
+                    this.myForm.controls.verticalPositioningAmount.patchValue(this.myForm.controls.verticalPositioningAmount.value-1);
                 }
                 else
                 {
@@ -142,7 +146,7 @@ export class AppComponent implements OnInit {
 
                 if ((this.highlightedItem != null))
                 {
-                    this.myForm.controls.y.patchValue(this.myForm.controls.y.value+1);
+                    this.myForm.controls.verticalPositioningAmount.patchValue(this.myForm.controls.verticalPositioningAmount.value+1);
                 }
                 else
                 {
@@ -240,6 +244,10 @@ export class AppComponent implements OnInit {
       }
 
 
+
+
+
+
     createTemplate(option)
     {
         this.selectedTemplate = option;
@@ -278,12 +286,43 @@ export class AppComponent implements OnInit {
         this.designData[this.highlightedItem].diameterCalcUnit = this.myForm.value.diameterCalcUnit;
 
         this.designData[this.highlightedItem].color = this.myForm.value.color;
-        this.designData[this.highlightedItem].x = this.myForm.value.x;
-        this.designData[this.highlightedItem].y = this.myForm.value.y;
+
+        this.designData[this.highlightedItem].horizontalPositioningStartingPoint = this.myForm.value.horizontalPositioningStartingPoint;
+        this.designData[this.highlightedItem].horizontalPositioningAmount = this.myForm.value.horizontalPositioningAmount;
+        this.designData[this.highlightedItem].horizontalPositioningUnit = this.myForm.value.horizontalPositioningUnit;
+
+        this.designData[this.highlightedItem].verticalPositioningStartingPoint = this.myForm.value.verticalPositioningStartingPoint;
+        this.designData[this.highlightedItem].verticalPositioningAmount = this.myForm.value.verticalPositioningAmount;
+        this.designData[this.highlightedItem].verticalPositioningUnit = this.myForm.value.verticalPositioningUnit;
+
         this.designData[this.highlightedItem].allowShimmerOverlay = this.myForm.value.allowShimmerOverlay;
         this.designData[this.highlightedItem].antialias = this.myForm.value.antialias;
 
         this.generate();
+    }
+
+    horizontalPositioningStartingPointChanged(){
+        if ((this.myForm.value.horizontalPositioningStartingPoint == "center"))
+        {
+            this.myForm.controls['horizontalPositioningAmount'].patchValue(null);
+            this.myForm.controls['horizontalPositioningUnit'].patchValue(null);
+        }
+        else{
+            this.myForm.controls['horizontalPositioningAmount'].patchValue(10);
+            this.myForm.controls['horizontalPositioningUnit'].patchValue("px");
+        }
+    }
+
+    verticalPositioningStartingPointChanged(){
+        if ((this.myForm.value.verticalPositioningStartingPoint == "center"))
+        {
+            this.myForm.controls['verticalPositioningAmount'].patchValue(null);
+            this.myForm.controls['verticalPositioningUnit'].patchValue(null);
+        }
+        else{
+            this.myForm.controls['verticalPositioningAmount'].patchValue(10);
+            this.myForm.controls['verticalPositioningUnit'].patchValue("px");
+        }
     }
 
     widthMeasurementChanged() {
@@ -470,6 +509,24 @@ export class AppComponent implements OnInit {
             return `calc(${record.height}${record.heightMeasurement} ${record.heightCalc} ${record.heightCalcAmount})`;
         }
     }
+
+    determineHorizontalPositioningOfShape(record){
+        if ((record.horizontalPositioningStartingPoint === "center")){
+            return `${record.horizontalPositioningStartingPoint}`;
+        }
+        else{
+            return `${record.horizontalPositioningStartingPoint} ${record.horizontalPositioningAmount}${record.horizontalPositioningUnit}`;
+        }
+    }
+
+    determineVerticalPositioningOfShape(record){
+        if ((record.verticalPositioningStartingPoint === "center")){
+            return `${record.verticalPositioningStartingPoint}`;
+        }
+        else{
+            return `${record.verticalPositioningStartingPoint} ${record.verticalPositioningAmount}${record.verticalPositioningUnit}`;
+        }
+    }
     
 
 
@@ -556,7 +613,7 @@ export class AppComponent implements OnInit {
 
             designDataReversed.forEach((x, index) => {
             
-                    this.generatedCss = this.generatedCss + "" + x.x + "px " + x.y + "px";
+                    this.generatedCss = this.generatedCss + "" + this.determineHorizontalPositioningOfShape(x) + " " + this.determineVerticalPositioningOfShape(x) + "";
                 
 
                 /* Do a comma for the next one, or a semicolon for the last one START */
@@ -653,7 +710,7 @@ export class AppComponent implements OnInit {
 
                             designDataReversed.forEach((x, index) => {
                             
-                                    this.generatedCss = this.generatedCss + "" + x.x + "px " + x.y + "px";
+                                    this.generatedCss = this.generatedCss + "" + this.determineHorizontalPositioningOfShape(x) + " " + this.determineVerticalPositioningOfShape(x) + "";
                                 
 
                                 /* Do a comma for the next one, or a semicolon for the last one START */
@@ -733,7 +790,7 @@ export class AppComponent implements OnInit {
 
                             designDataReversed.forEach((x, index) => {
                             
-                                    this.generatedCss = this.generatedCss + "" + x.x + "px " + x.y + "px";
+                                    this.generatedCss = this.generatedCss + "" + this.determineHorizontalPositioningOfShape(x) + " " + this.determineVerticalPositioningOfShape(x) + "";
                                 
 
                                 /* Do a comma for the next one, or a semicolon for the last one START */
@@ -819,7 +876,7 @@ export class AppComponent implements OnInit {
 
                 designDataReversed.forEach((x, index) => {
                 
-                        this.generatedCss = this.generatedCss + "" + x.x + "px " + x.y + "px";
+                        this.generatedCss = this.generatedCss + "" + this.determineHorizontalPositioningOfShape(x) + " " + this.determineVerticalPositioningOfShape(x) + "";
                     
 
                     /* Do a comma for the next one, or a semicolon for the last one START */
@@ -850,7 +907,7 @@ export class AppComponent implements OnInit {
 
                 designDataReversed.forEach((x, index) => {
 
-                    this.generatedCss = this.generatedCss + "" + x.x + "px " + x.y + "px";
+                    this.generatedCss = this.generatedCss + "" + this.determineHorizontalPositioningOfShape(x) + " " + this.determineVerticalPositioningOfShape(x) + "";
     
     
                     /* Do a comma for the next one, or a semicolon for the last one START */
@@ -968,8 +1025,12 @@ export class AppComponent implements OnInit {
         this.myForm.controls['diameterCalcAmount'].patchValue(item.diameterCalcAmount);
         this.myForm.controls['diameterCalcUnit'].patchValue(item.diameterCalcUnit);
         this.myForm.controls['color'].patchValue(item.color);
-        this.myForm.controls['x'].patchValue(item.x);
-        this.myForm.controls['y'].patchValue(item.y);
+        this.myForm.controls['horizontalPositioningStartingPoint'].patchValue(item.horizontalPositioningStartingPoint);
+        this.myForm.controls['horizontalPositioningAmount'].patchValue(item.horizontalPositioningAmount);
+        this.myForm.controls['horizontalPositioningUnit'].patchValue(item.horizontalPositioningUnit);
+        this.myForm.controls['verticalPositioningStartingPoint'].patchValue(item.verticalPositioningStartingPoint);
+        this.myForm.controls['verticalPositioningAmount'].patchValue(item.verticalPositioningAmount);
+        this.myForm.controls['verticalPositioningUnit'].patchValue(item.verticalPositioningUnit);
         this.myForm.controls['allowShimmerOverlay'].patchValue(item.allowShimmerOverlay);
         this.myForm.controls['antialias'].patchValue(item.antialias);
     }

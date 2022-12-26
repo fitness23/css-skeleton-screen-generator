@@ -18,12 +18,23 @@
     <div id="designCanvas" [ngStyle]="{'height': canvasHeight+'px', 'background-color': canvasColor, 'border-radius': canvasBorderRadiusTopLeft+'px '+canvasBorderRadiusTopRight+'px '+canvasBorderRadiusBottomRight+'px '+this.canvasBorderRadiusBottomLeft+'px', 'background-image': designCanvasTempBackgroundImage != null ? 'url(' + designCanvasTempBackgroundImage + ')' : 'none', 'background-position': designCanvasTempBackgroundImage != null ? ''+tempBackgroundXPos+'px '+tempBackgroundYPos+'px' : 'inital'}" (contextmenu)="open($event, $event); $event.preventDefault();" (paste)="onPaste($event)">
       <div (clickOutside)="onClickedOutside($event)">
         <ng-container *ngFor="let item of designData; let i=index">
-          <div class="itemContainer" [ngClass]="{'active' : i == highlightedItem}">
-              <div class="item" [ngStyle]="{'background-color': item.color, 'left': item.x+'px', 'top': item.y+'px', 'border-radius': item.type == 'circle' ? item.diameter+'px' : 0+'px', 'width': item.type == 'circle' ? item.diameter+item.diameterMeasurement : determineRectangleWidth(item), 'height': item.type == 'circle' ? item.diameter+'px' : determineRectangleHeightDesignView(item)}" (click)="highlightItem(i,item)">
-                <div class="inner">
-                  <!--<div class="delete" (click)="deleteItem(i)">X</div>--> <!-- This is the old delete button, now users just delete by pressing the delete key -->
-                </div>
+          <div class="itemContainer" [ngClass]="{'active' : i == highlightedItem}" [ngStyle]="{'height': repeatDesign+'px'}">
+            <div class="itemInnerContainer" [ngClass]="{'horizontalCenter' : item.horizontalPositioningStartingPoint === 'center', 'verticalCenter' : item.verticalPositioningStartingPoint === 'center'}">
+              <div class="item"
+                [ngStyle]="{
+                'background-color': item.color,
+                'border-radius': item.type == 'circle' ? item.diameter+'px' : 0+'px',
+                'width': item.type == 'circle' ? item.diameter+item.diameterMeasurement : determineRectangleWidth(item),
+                'height': item.type == 'circle' ? item.diameter+'px' : determineRectangleHeightDesignView(item),
+                'left': item.horizontalPositioningStartingPoint == 'left' ? item.horizontalPositioningAmount+item.horizontalPositioningUnit : auto,
+                'right': item.horizontalPositioningStartingPoint == 'right' ? item.horizontalPositioningAmount+item.horizontalPositioningUnit : auto,
+                'top': item.verticalPositioningStartingPoint == 'top' ? item.verticalPositioningAmount+item.verticalPositioningUnit : auto,
+                'bottom': item.verticalPositioningStartingPoint == 'bottom' ? item.verticalPositioningAmount+item.verticalPositioningUnit : auto
+                }"
+                (click)="highlightItem(i,item)"
+                >
               </div>
+            </div>
           </div>
         </ng-container>
       </div>
@@ -50,15 +61,64 @@
             <li class="subHeading"><div>Item Properties</div></li>
 
             <li class="itemCoreDetails">
+              <div class="itemHeading">Horizontal Positioning</div>
               <div class="itemCoreDetailsContainer">
                 <div class="block">
-                  <label>x</label>
-                  <input type="number" formControlName="x" />
+                  <label>Starting Point</label>
+                  <select formControlName="horizontalPositioningStartingPoint" (change)="horizontalPositioningStartingPointChanged()">
+                    <option [ngValue]="'left'">left</option>
+                    <option [ngValue]="'center'">center</option>
+                    <option [ngValue]="'right'">right</option>
+                  </select>
                 </div>
+                <ng-container *ngIf="myForm.controls.horizontalPositioningStartingPoint.value != 'center'">
+                  <div class="block">
+                    <label>Amount</label>
+                    <input type="number" formControlName="horizontalPositioningAmount" />
+                  </div>
+                  <div class="block">
+                    <label>Unit</label>
+                    <select formControlName="horizontalPositioningUnit">
+                      <option [ngValue]="'px'">px</option>
+                      <option [ngValue]="'%'">%</option>
+                      <option [ngValue]="'rem'">rem</option>
+                      <option [ngValue]="'em'">em</option>
+                      <option [ngValue]="'cm'">cm</option>
+                      <option [ngValue]="'ch'">ch</option>
+                    </select>
+                  </div>
+                </ng-container>
+              </div>
+            </li>
+
+            <li class="itemCoreDetails">
+              <div class="itemHeading">Vertical Positioning</div>
+              <div class="itemCoreDetailsContainer">
                 <div class="block">
-                  <label>y</label>
-                  <input type="number" formControlName="y" />
+                  <label>Starting Point</label>
+                  <select formControlName="verticalPositioningStartingPoint" (change)="verticalPositioningStartingPointChanged()">
+                    <option [ngValue]="'top'">top</option>
+                    <option [ngValue]="'center'">center</option>
+                    <option [ngValue]="'bottom'">bottom</option>
+                  </select>
                 </div>
+                <ng-container *ngIf="myForm.controls.verticalPositioningStartingPoint.value != 'center'">
+                  <div class="block">
+                    <label>Amount</label>
+                    <input type="number" formControlName="verticalPositioningAmount" />
+                  </div>
+                  <div class="block">
+                    <label>Unit</label>
+                    <select formControlName="verticalPositioningUnit">
+                      <option [ngValue]="'px'">px</option>
+                      <option [ngValue]="'%'">%</option>
+                      <option [ngValue]="'rem'">rem</option>
+                      <option [ngValue]="'em'">em</option>
+                      <option [ngValue]="'cm'">cm</option>
+                      <option [ngValue]="'ch'">ch</option>
+                    </select>
+                  </div>
+                </ng-container>
               </div>
             </li>
 
