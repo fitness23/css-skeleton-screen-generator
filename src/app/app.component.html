@@ -1,46 +1,73 @@
-﻿<div id="designView">
-  <div id="designViewInner">
-  <div class="paneLabel dark">Design View</div>
-  <div class="preMadeTemplateOptions">
-    <div class="premadeTemplates">
-      <label>Templates:</label>
-      <div class="optionContainer">
-        <div class="option" [ngClass]="{'active' : selectedTemplate == 'option1'}" (click)="createTemplate('option1')">blog</div>
-        <div class="option" [ngClass]="{'active' : selectedTemplate == 'option2'}" (click)="createTemplate('option2')">list</div>
-        <div class="option" [ngClass]="{'active' : selectedTemplate == 'option3'}" (click)="createTemplate('option3')">video</div>
-        <div class="option" [ngClass]="{'active' : selectedTemplate == 'option4'}" (click)="createTemplate('option4')">blank</div>
+@if (showModal) {
+  <div class="verticalAndHorizontalAlignmentContainer1">
+    <div class="verticalAndHorizontalAlignmentContainer2">
+      <div class="verticalAndHorizontalAlignmentContainer3">
+        <div class="modalAttention">
+  
+          <div><p>Are you sure you want to delete your pasted in image?</p></div>
+  
+          <button class="standardButton" type="button" (click)="closeModal()">Cancel</button>
+          <button class="standardButton" type="button" (click)="deleteBackgroundImage()">Yes</button>
+  
+        </div>
       </div>
-      <div class="rightClickInstructions">Right click the canvas to add more shapes. Left click on existing shapes to edit them.</div>
     </div>
   </div>
+}
 
-  <div class="container">
-    <div id="designCanvas" [ngStyle]="{'height': canvasHeight+'px', 'background-color': canvasColor, 'border-radius': canvasBorderRadiusTopLeft+'px '+canvasBorderRadiusTopRight+'px '+canvasBorderRadiusBottomRight+'px '+this.canvasBorderRadiusBottomLeft+'px', 'background-image': designCanvasTempBackgroundImage != null ? 'url(' + designCanvasTempBackgroundImage + ')' : 'none', 'background-position': designCanvasTempBackgroundImage != null ? ''+tempBackgroundXPos+'px '+tempBackgroundYPos+'px' : 'inital'}" (contextmenu)="open($event, $event); $event.preventDefault();" (paste)="onPaste($event)">
-      <div (clickOutside)="onClickedOutside($event)">
-        <ng-container *ngFor="let item of designData; let i=index">
-          <div class="itemContainer" [ngClass]="{'active' : i == highlightedItem}" [ngStyle]="{'height': repeatDesign+'px'}">
-            <div class="itemInnerContainer" [ngClass]="{'horizontalCenter' : item.horizontalPositioningStartingPoint === 'center', 'verticalCenter' : item.verticalPositioningStartingPoint === 'center'}">
-              <div class="item"
+<div id="designView">
+  <div id="designViewInner">
+    <div class="paneLabel dark">Design View</div>
+    <div class="preMadeTemplateOptions">
+      <div class="premadeTemplates">
+        <label>Templates:</label>
+        <div class="optionContainer">
+          <div class="option" [class]="{'active' : selectedTemplate == 'option1'}" (click)="createTemplate('option1')">blog</div>
+          <div class="option" [class]="{'active' : selectedTemplate == 'option2'}" (click)="createTemplate('option2')">list</div>
+          <div class="option" [class]="{'active' : selectedTemplate == 'option3'}" (click)="createTemplate('option3')">video</div>
+          <div class="option" [class]="{'active' : selectedTemplate == 'option4'}" (click)="createTemplate('option4')">blank</div>
+        </div>
+        <div class="rightClickInstructions">Right click the canvas to add more shapes. Left click on existing shapes to edit them.</div>
+      </div>
+    </div>
+
+    <div class="tip">
+      @if (designCanvasTempBackgroundImage == null) {
+            <div>Paste your screen onto the canvas in order to properly line up the shapes. Take a print screen and paste using ctrl+v.</div>
+        }
+      
+        @if (designCanvasTempBackgroundImage != null) {
+            <div>Use the arrow keys to reposition the background.<br />Hit the delete key when you want to remove the background.</div>
+        }
+    </div>
+
+    <div class="container">
+      <div id="designCanvas" [style]="{'height': canvasHeight+'px', 'background-color': canvasColor, 'border-radius': canvasBorderRadiusTopLeft+'px '+canvasBorderRadiusTopRight+'px '+canvasBorderRadiusBottomRight+'px '+this.canvasBorderRadiusBottomLeft+'px', 'background-image': designCanvasTempBackgroundImage != null ? 'url(' + designCanvasTempBackgroundImage + ')' : 'none', 'background-position': designCanvasTempBackgroundImage != null ? ''+tempBackgroundXPos+'px '+tempBackgroundYPos+'px' : 'inital'}" (contextmenu)="open($event, $event); $event.preventDefault();" (paste)="onPaste($event)">
+        <div (clickOutside)="onClickedOutside($event)">
+          @for (item of designData; track item; let i = $index) {
+            <div class="itemContainer" [class]="{'active' : i == highlightedItem}" [style]="{'height': repeatDesign+'px'}">
+              <div class="itemInnerContainer" [class]="{'horizontalCenter' : item.horizontalPositioningStartingPoint === 'center', 'verticalCenter' : item.verticalPositioningStartingPoint === 'center'}">
+                <div class="item"
                 [ngStyle]="{
-                'background-color': item.color,
-                'border-radius': item.type == 'circle' ? item.diameter+'px' : 0+'px',
-                'width': item.type == 'circle' ? item.diameter+item.diameterMeasurement : determineRectangleWidth(item),
-                'height': item.type == 'circle' ? item.diameter+'px' : determineRectangleHeightDesignView(item),
-                'left': item.horizontalPositioningStartingPoint == 'left' ? item.horizontalPositioningAmount+item.horizontalPositioningUnit : auto,
-                'right': item.horizontalPositioningStartingPoint == 'right' ? item.horizontalPositioningAmount+item.horizontalPositioningUnit : auto,
-                'top': item.verticalPositioningStartingPoint == 'top' ? item.verticalPositioningAmount+item.verticalPositioningUnit : auto,
-                'bottom': item.verticalPositioningStartingPoint == 'bottom' ? item.verticalPositioningAmount+item.verticalPositioningUnit : auto
-                }"
-                (click)="highlightItem(i,item)"
-                >
+                  'background-color': item.color,
+                  'border-radius': item.type == 'circle' ? item.diameter+'px' : 0+'px',
+                  'width': item.type == 'circle' ? item.diameter+item.diameterMeasurement! : determineRectangleWidth(item),
+                  'height': item.type == 'circle' ? item.diameter+'px' : determineRectangleHeightDesignView(item),
+                  'left': item.horizontalPositioningStartingPoint == 'left' ? item.horizontalPositioningAmount+item.horizontalPositioningUnit : 'auto',
+                  'right': item.horizontalPositioningStartingPoint == 'right' ? item.horizontalPositioningAmount+item.horizontalPositioningUnit : 'auto',
+                  'top': item.verticalPositioningStartingPoint == 'top' ? item.verticalPositioningAmount+item.verticalPositioningUnit : 'auto',
+                  'bottom': item.verticalPositioningStartingPoint == 'bottom' ? item.verticalPositioningAmount+item.verticalPositioningUnit : 'auto'
+                  }"
+                  (click)="highlightItem(i,item)"
+                  >
+                </div>
               </div>
             </div>
-          </div>
-        </ng-container>
+          }
+        </div>
+        <div id="repeatDesignMarker" [style]="{'top': repeatDesign+'px'}">Repeat Design</div>
       </div>
-      <div id="repeatDesignMarker" [ngStyle]="{'top': repeatDesign+'px'}">Repeat Design</div>
     </div>
-  </div>
   </div>
 </div>
 <div id="designTools">
@@ -49,33 +76,33 @@
 
     <div class="newShapeColor">
       <label>New Shape Color</label>
-      <div class="colorToChoose" [(colorPicker)]="newShapeColor" [style.background]="newShapeColor" [cpPosition]="'bottom-left'" [cpWidth]="'200'"></div>
+      <input class="colorToChoose" [(colorPicker)]="newShapeColor" [style.background]="newShapeColor" [cpPosition]="'bottom-left'" [cpWidth]="'200'" />
     </div>
   </div>
-  
+
 
   <div id="tools">
 
 
     <form [formGroup]="myForm">
-      
 
-        <div id="itemSpecificDetails" *ngIf="highlightedItem != null">
+
+      @if (highlightedItem != -1) {
+        <div id="itemSpecificDetails">
           <ul>
             <li class="subHeading"><div>Item Properties</div></li>
-
             <li class="itemCoreDetails">
               <div class="itemHeading">Horizontal Positioning</div>
               <div class="itemCoreDetailsContainer">
                 <div class="block">
                   <label>Starting Point</label>
                   <select formControlName="horizontalPositioningStartingPoint" (change)="horizontalPositioningStartingPointChanged()">
-                    <option [ngValue]="'left'">left</option>
-                    <option [ngValue]="'center'">center</option>
-                    <option [ngValue]="'right'">right</option>
+                    <option [value]="'left'">left</option>
+                    <option [value]="'center'">center</option>
+                    <option [value]="'right'">right</option>
                   </select>
                 </div>
-                <ng-container *ngIf="myForm.controls.horizontalPositioningStartingPoint.value != 'center'">
+                @if (myForm.controls['horizontalPositioningStartingPoint'].value != 'center') {
                   <div class="block">
                     <label>Amount</label>
                     <input type="number" min="0" formControlName="horizontalPositioningAmount" />
@@ -83,30 +110,29 @@
                   <div class="block">
                     <label>Unit</label>
                     <select formControlName="horizontalPositioningUnit">
-                      <option [ngValue]="'px'">px</option>
-                      <option [ngValue]="'%'">%</option>
-                      <option [ngValue]="'rem'">rem</option>
-                      <option [ngValue]="'em'">em</option>
-                      <option [ngValue]="'cm'">cm</option>
-                      <option [ngValue]="'ch'">ch</option>
+                      <option [value]="'px'">px</option>
+                      <option [value]="'%'">%</option>
+                      <option [value]="'rem'">rem</option>
+                      <option [value]="'em'">em</option>
+                      <option [value]="'cm'">cm</option>
+                      <option [value]="'ch'">ch</option>
                     </select>
                   </div>
-                </ng-container>
+                }
               </div>
             </li>
-
             <li class="itemCoreDetails">
               <div class="itemHeading">Vertical Positioning</div>
               <div class="itemCoreDetailsContainer">
                 <div class="block">
                   <label>Starting Point</label>
                   <select formControlName="verticalPositioningStartingPoint" (change)="verticalPositioningStartingPointChanged()">
-                    <option [ngValue]="'top'">top</option>
-                    <!--<option [ngValue]="'center'">center</option>-->
-                    <option [ngValue]="'bottom'">bottom</option>
+                    <option [value]="'top'">top</option>
+                    <!--<option [value]="'center'">center</option>-->
+                    <!--<option [value]="'bottom'">bottom</option>-->
                   </select>
                 </div>
-                <ng-container *ngIf="myForm.controls.verticalPositioningStartingPoint.value != 'center'">
+                @if (myForm.controls['verticalPositioningStartingPoint'].value != 'center') {
                   <div class="block">
                     <label>Amount</label>
                     <input type="number" min="0" formControlName="verticalPositioningAmount" />
@@ -114,120 +140,130 @@
                   <div class="block">
                     <label>Unit</label>
                     <select formControlName="verticalPositioningUnit">
-                      <option [ngValue]="'px'">px</option>
-                      <option [ngValue]="'%'">%</option>
-                      <option [ngValue]="'rem'">rem</option>
-                      <option [ngValue]="'em'">em</option>
-                      <option [ngValue]="'cm'">cm</option>
-                      <option [ngValue]="'ch'">ch</option>
+                      <option [value]="'px'">px</option>
+                      <option [value]="'%'">%</option>
+                      <option [value]="'rem'">rem</option>
+                      <option [value]="'em'">em</option>
+                      <option [value]="'cm'">cm</option>
+                      <option [value]="'ch'">ch</option>
                     </select>
                   </div>
-                </ng-container>
+                }
               </div>
             </li>
-
-            <li class="itemCoreDetails" *ngIf="selectedType == 'rectangle'">
-              <div class="itemHeading">Width</div>
-              <div class="itemCoreDetailsContainer">
-                <div class="block">
-                  <label>Amount</label>
-                  <input type="number" min="0" formControlName="width" />
-                </div>
-                <div class="block">
-                  <label>Unit</label>
-                  <select formControlName="widthMeasurement" (change)="widthMeasurementChanged()">
-                    <option [ngValue]="'px'">px</option>
-                    <option [ngValue]="'%'">%</option>
-                  </select>
-                </div>
-                <div class="block">
-                  <label>Calc</label>
-                  <select formControlName="widthCalc" (change)="widthCalcChanged()">
-                    <option [ngValue]="null">None</option>
-                    <option [ngValue]="'-'">-</option>
-                    <option [ngValue]="'+'">+</option>
-                    <option [ngValue]="'*'">*</option>
-                    <option [ngValue]="'/'">/</option>
-                  </select>
-                </div>
-                  <div class="block" *ngIf="myForm.controls.widthCalc.value != null">
+            @if (selectedType == 'rectangle') {
+              <li class="itemCoreDetails">
+                <div class="itemHeading">Width</div>
+                <div class="itemCoreDetailsContainer">
+                  <div class="block">
                     <label>Amount</label>
-                    <input type="number" min="0" formControlName="widthCalcAmount" />
+                    <input type="number" min="0" formControlName="width" />
                   </div>
-                  <div class="block" *ngIf="(myForm.controls.widthCalc.value != null) && ((myForm.controls.widthCalc.value === '-') || (myForm.controls.widthCalc.value === '+'))">
+                  <div class="block">
                     <label>Unit</label>
-                    <select formControlName="widthCalcUnit">
-                      <option [ngValue]="'px'">px</option>
-                      <option [ngValue]="'%'">%</option>
-                      <option [ngValue]="'rem'">rem</option>
-                      <option [ngValue]="'em'">em</option>
+                    <select formControlName="widthMeasurement" (change)="widthMeasurementChanged()">
+                      <option [value]="'px'">px</option>
+                      <option [value]="'%'">%</option>
                     </select>
                   </div>
-              </div>
-            </li>
-
-            <li class="itemCoreDetails" *ngIf="selectedType == 'rectangle'">
-              <div class="itemHeading">Height</div>
-              <div class="itemCoreDetailsContainer">
-                <div class="block">
-                  <label>Amount</label>
-                  <input type="number" min="0" formControlName="height" />
+                  <div class="block">
+                    <label>Calc</label>
+                    <select formControlName="widthCalc" (change)="widthCalcChanged()">
+                      <option [value]="null">None</option>
+                      <option [value]="'-'">-</option>
+                      <option [value]="'+'">+</option>
+                      <option [value]="'*'">*</option>
+                      <option [value]="'/'">/</option>
+                    </select>
+                  </div>
+                  @if (myForm.controls['widthCalc'].value != null) {
+                    <div class="block">
+                      <label>Amount</label>
+                      <input type="number" min="0" formControlName="widthCalcAmount" />
+                    </div>
+                  }
+                  @if ((myForm.controls['widthCalc'].value != null) && ((myForm.controls['widthCalc'].value === '-') || (myForm.controls['widthCalc'].value === '+'))) {
+                    <div class="block">
+                      <label>Unit</label>
+                      <select formControlName="widthCalcUnit">
+                        <option [value]="'px'">px</option>
+                        <option [value]="'%'">%</option>
+                        <option [value]="'rem'">rem</option>
+                        <option [value]="'em'">em</option>
+                      </select>
+                    </div>
+                  }
                 </div>
-                <div class="block">
-                  <label>Unit</label>
-                  <select formControlName="heightMeasurement" (change)="heightMeasurementChanged()">
-                    <option [ngValue]="'px'">px</option>
-                    <option [ngValue]="'%'">%</option>
-                  </select>
-                </div>
-                <div class="block">
-                  <label>Calc</label>
-                  <select formControlName="heightCalc" (change)="heightCalcChanged()">
-                    <option [ngValue]="null">None</option>
-                    <option [ngValue]="'-'">-</option>
-                    <option [ngValue]="'+'">+</option>
-                    <option [ngValue]="'*'">*</option>
-                    <option [ngValue]="'/'">/</option>
-                  </select>
-                </div>
-                  <div class="block" *ngIf="myForm.controls.heightCalc.value != null">
+              </li>
+            }
+            @if (selectedType == 'rectangle') {
+              <li class="itemCoreDetails">
+                <div class="itemHeading">Height</div>
+                <div class="itemCoreDetailsContainer">
+                  <div class="block">
                     <label>Amount</label>
-                    <input type="number" min="0" formControlName="heightCalcAmount" />
+                    <input type="number" min="0" formControlName="height" />
                   </div>
-                  <div class="block" *ngIf="(myForm.controls.heightCalc.value != null) && ((myForm.controls.heightCalc.value === '-') || (myForm.controls.heightCalc.value === '+'))">
+                  <div class="block">
                     <label>Unit</label>
-                    <select formControlName="heightCalcUnit">
-                      <option [ngValue]="'px'">px</option>
-                      <option [ngValue]="'%'">%</option>
-                      <option [ngValue]="'rem'">rem</option>
-                      <option [ngValue]="'em'">em</option>
+                    <select formControlName="heightMeasurement" (change)="heightMeasurementChanged()">
+                      <option [value]="'px'">px</option>
+                      <option [value]="'%'">%</option>
                     </select>
                   </div>
-              </div>
-            </li>
-
-            <li class="itemCoreDetails" *ngIf="selectedType == 'circle'">
-              <div class="itemHeading">Diameter</div>
-              <div class="itemCoreDetailsContainer">
-                <div class="block">
-                  <label>Amount</label>
-                  <input type="number" min="0" formControlName="diameter" (keyup)="syncHeight()" (change)="syncHeight()" />
+                  <div class="block">
+                    <label>Calc</label>
+                    <select formControlName="heightCalc" (change)="heightCalcChanged()">
+                      <option [value]="null">None</option>
+                      <option [value]="'-'">-</option>
+                      <option [value]="'+'">+</option>
+                      <option [value]="'*'">*</option>
+                      <option [value]="'/'">/</option>
+                    </select>
+                  </div>
+                  @if (myForm.controls['heightCalc'].value != null) {
+                    <div class="block">
+                      <label>Amount</label>
+                      <input type="number" min="0" formControlName="heightCalcAmount" />
+                    </div>
+                  }
+                  @if ((myForm.controls['heightCalc'].value != null) && ((myForm.controls['heightCalc'].value === '-') || (myForm.controls['heightCalc'].value === '+'))) {
+                    <div class="block">
+                      <label>Unit</label>
+                      <select formControlName="heightCalcUnit">
+                        <option [value]="'px'">px</option>
+                        <option [value]="'%'">%</option>
+                        <option [value]="'rem'">rem</option>
+                        <option [value]="'em'">em</option>
+                      </select>
+                    </div>
+                  }
                 </div>
-                <div class="block">
-                  <label>Unit</label>
-                  <div>px</div>
-                </div>
-                <!--
-                <div class="block">
-                  <label>Calc</label>
-                  <select formControlName="diameterCalc" (change)="diameterCalcChanged()">
-                    <option [ngValue]="null">None</option>
-                    <option [ngValue]="'-'">-</option>
-                    <option [ngValue]="'+'">+</option>
-                    <option [ngValue]="'*'">*</option>
-                    <option [ngValue]="'/'">/</option>
-                  </select>
-                </div>
+              </li>
+            }
+            @if (selectedType == 'circle') {
+              <li class="itemCoreDetails">
+                <div class="itemHeading">Diameter</div>
+                <div class="itemCoreDetailsContainer">
+                  <div class="block">
+                    <label>Amount</label>
+                    <input type="number" min="0" formControlName="diameter" (keyup)="syncHeight()" (change)="syncHeight()" />
+                  </div>
+                  <div class="block">
+                    <label>Unit</label>
+                    <div>px</div>
+                  </div>
+                  <!--
+                  <div class="block">
+                    <label>Calc</label>
+                    <select formControlName="diameterCalc" (change)="diameterCalcChanged()">
+                      <option [ngValue]="null">None</option>
+                      <option [ngValue]="'-'">-</option>
+                      <option [ngValue]="'+'">+</option>
+                      <option [ngValue]="'*'">*</option>
+                      <option [ngValue]="'/'">/</option>
+                    </select>
+                  </div>
                   <div class="block" *ngIf="myForm.controls.diameterCalc.value != null">
                     <label>Amount</label>
                     <input type="number" min="0" formControlName="diameterCalcAmount" />
@@ -242,121 +278,116 @@
                     </select>
                   </div>
                   -->
-              </div>
-            </li>
-
-            
-            
-            
+                </div>
+              </li>
+            }
             <li class="colorQuestion" style="position: relative;">
               <label>Color</label>
-              <div class="colorToChoose" [(colorPicker)]="myForm.controls.color.value" [style.background]="myForm.controls.color.value" [cpPosition]="'bottom'" [cpWidth]="'200'" (colorPickerChange)="changeColor($event)"></div>
+              <input class="colorToChoose" [(colorPicker)]="myForm.controls['color'].value" [style.background]="myForm.controls['color'].value" [cpPosition]="'bottom'" [cpWidth]="'200'" (colorPickerChange)="changeColor($event)" />
             </li>
-
             <!--<li class="checkboxQuestion">
-      <input type="checkbox" formControlName="allowShimmerOverlay" />
-      <label>Allow shimmer overlay</label>
-    </li>-->
-            <li class="checkboxQuestion">
-              <input type="checkbox" formControlName="antialias" />
-              <label>Anti-alias (Only really going to see this on circles)</label>
-            </li>
+            <input type="checkbox" formControlName="allowShimmerOverlay" />
+            <label>Allow shimmer overlay</label>
+          </li>-->
+          <li class="checkboxQuestion">
+            <input type="checkbox" formControlName="antialias" />
+            <label>Anti-alias (Only really going to see this on circles)</label>
+          </li>
+          <!--<li><button type="button" (click)="generate()">Generate</button></li>-->
+        </ul>
+      </div>
+    }
 
-            <!--<li><button type="button" (click)="generate()">Generate</button></li>-->
 
-          </ul>
+
+
+  </form>
+
+
+  <ul>
+
+
+
+    <!--<li class="addShape">
+    <label>Add Shape</label>
+    <div>
+      <button type="button" (click)="addCircle()">Add Circle</button>
+      <button type="button" (click)="addRectangle()">Add Rectangle / Square</button>
+    </div>
+  </li>-->
+  <li class="subHeading">Canvas Settings</li>
+  <li class="multipleQuestions">
+    <div class="title">Basics</div>
+    <div class="options">
+      <div class="block" style="position: relative;">
+        <label>Color</label>
+        <input class="colorToChoose" [(colorPicker)]="canvasColor" [style.background]="canvasColor" [cpPosition]="'bottom'" [cpWidth]="'200'" (colorPickerChange)="generate()" />
+      </div>
+      <div class="block">
+        <label>Height</label>
+        <input type="number" min="0" [(ngModel)]="canvasHeight" (change)="generate()" (keyup)="generate()" />
+      </div>
+      <div class="block">
+        <label>Repeat Design</label>
+        <input type="number" min="0" [(ngModel)]="repeatDesign" (change)="generate()" (keyup)="generate()" />
+      </div>
+      <div class="block">
+        <label>Z-Index</label>
+        <input type="number" min="1" [(ngModel)]="shapesZIndex" (change)="generate()" (keyup)="generate()" />
+      </div>
+    </div>
+  </li>
+  <li class="multipleQuestions">
+    <div class="title">Border Radius</div>
+    <div class="options">
+      <div class="block">
+        <label>Top Left</label>
+        <input type="number" min="0" [(ngModel)]="canvasBorderRadiusTopLeft" (change)="generate()" (keyup)="generate()" />
+      </div>
+      <div class="block">
+        <label>Top Right</label>
+        <input type="number" min="0" [(ngModel)]="canvasBorderRadiusTopRight" (change)="generate()" (keyup)="generate()" />
+      </div>
+      <div class="block">
+        <label>Bottom Right</label>
+        <input type="number" min="0" [(ngModel)]="canvasBorderRadiusBottomRight" (change)="generate()" (keyup)="generate()" />
+      </div>
+      <div class="block">
+        <label>Bottom Left</label>
+        <input type="number" min="0" [(ngModel)]="canvasBorderRadiusBottomLeft" (change)="generate()" (keyup)="generate()" />
+      </div>
+    </div>
+  </li>
+
+  <li class="multipleQuestions">
+    <div class="title">Shimmer <input type="checkbox" [(ngModel)]="showShimmer" (change)="generate()" /></div>
+    @if (showShimmer == true) {
+      <div class="options">
+        <div class="block">
+          <label>Type</label>
+          <select [(ngModel)]="shimmerType" (change)="changeCanvasColorBasedOnShimmerType();generate()">
+            <option [ngValue]="0">Affect shapes only</option>
+            <option [ngValue]="1">Affect whole panel</option>
+          </select>
+        </div>
+        <div class="block">
+          <label>Duration</label>
+          <input type="number" min="0" [(ngModel)]="playShimmerDuration" (change)="generate()" (keyup)="generate()" min="0.5" step="0.1" />
+        </div>
+        <div class="block" style="position: relative;">
+          <label>Color</label>
+          <input class="colorToChoose" [(colorPicker)]="shimmerColor" [style.background]="shimmerColor" [cpOutputFormat]="'rgba'" [cpPosition]="'top-left'" [cpWidth]="'200'" (colorPickerChange)="generate()" />
+        </div>
+      </div>
+    }
+  </li>
+
+  
+</ul>
+
+
+
 </div>
-
-        
-
-      
-    </form>
-
-
-    <ul>
-
-      
-
-      <!--<li class="addShape">
-        <label>Add Shape</label>
-        <div>
-          <button type="button" (click)="addCircle()">Add Circle</button>
-          <button type="button" (click)="addRectangle()">Add Rectangle / Square</button>
-        </div>
-      </li>-->
-      <li class="subHeading">Canvas Settings</li>
-      <li class="multipleQuestions">
-        <div class="title">Basics</div>
-        <div class="options">
-          <div class="block" style="position: relative;">
-            <label>Color</label>
-            <div class="colorToChoose" [(colorPicker)]="canvasColor" [style.background]="canvasColor" [cpPosition]="'bottom'" [cpWidth]="'200'" (colorPickerChange)="generate()"></div>
-          </div>
-          <div class="block">
-            <label>Height</label>
-            <input type="number" min="0" [(ngModel)]="canvasHeight" (change)="generate()" (keyup)="generate()" />
-          </div>
-          <div class="block">
-            <label>Repeat Design</label>
-            <input type="number" min="0" [(ngModel)]="repeatDesign" (change)="generate()" (keyup)="generate()" />
-          </div>
-        </div>
-      </li>
-      <li class="multipleQuestions">
-        <div class="title">Border Radius</div>
-        <div class="options">
-          <div class="block">
-            <label>Top Left</label>
-            <input type="number" min="0" [(ngModel)]="canvasBorderRadiusTopLeft" (change)="generate()" (keyup)="generate()" />
-          </div>
-          <div class="block">
-            <label>Top Right</label>
-            <input type="number" min="0" [(ngModel)]="canvasBorderRadiusTopRight" (change)="generate()" (keyup)="generate()" />
-          </div>
-          <div class="block">
-            <label>Bottom Right</label>
-            <input type="number" min="0" [(ngModel)]="canvasBorderRadiusBottomRight" (change)="generate()" (keyup)="generate()" />
-          </div>
-          <div class="block">
-            <label>Bottom Left</label>
-            <input type="number" min="0" [(ngModel)]="canvasBorderRadiusBottomLeft" (change)="generate()" (keyup)="generate()" />
-          </div>
-        </div>
-      </li>
-
-      <li class="multipleQuestions">
-        <div class="title">Shimmer <input type="checkbox" [(ngModel)]="showShimmer" (change)="generate()" /></div>
-        <div class="options" *ngIf="showShimmer == true">
-          <div class="block">
-            <label>Type</label>
-            <select [(ngModel)]="shimmerType" (change)="changeCanvasColorBasedOnShimmerType();generate()">
-              <option [ngValue]="0">Affect shapes only</option>
-              <option [ngValue]="1">Affect whole panel</option>
-            </select>
-          </div>
-          <div class="block">
-            <label>Duration</label>
-            <input type="number" min="0" [(ngModel)]="playShimmerDuration" (change)="generate()" (keyup)="generate()" min="0.5" step="0.1" />
-          </div>
-          <div class="block" style="position: relative;">
-            <label>Color</label>
-            <div class="colorToChoose" [(colorPicker)]="shimmerColor" [style.background]="shimmerColor" [cpOutputFormat]="'rgba'" [cpPosition]="'top-left'" [cpWidth]="'200'" (colorPickerChange)="generate()"></div>
-          </div>
-        </div>
-      </li>
-
-      <li *ngIf="designCanvasTempBackgroundImage == null">
-        <div>To temporarily paste your screen onto the canvas in order to properly line up the shapes, take a print screen and paste using ctrl+v.</div>
-      </li>
-
-      <li *ngIf="designCanvasTempBackgroundImage != null">
-        <div>Use the arrow keys to reposition the background.<br />Hit the delete key when you want to remove your temporary background image.</div>
-      </li>
-      </ul>
-
-
-    
-  </div>
 
 </div>
 
@@ -382,11 +413,11 @@
     <div class="label">HTML:</div>
     <textarea readonly>&#60;div class="skeleton-{{randomSkeletonName}}"&#62;&#60;/div&#62;</textarea>
     <p>Insert your content <strong>inside</strong> this div once it's loaded and ready to be displayed, for example...<br /><br />
-      <strong>Angular:</strong><br />&#60;div class="skeleton-{{randomSkeletonName}}"&#62;&#60;div *ngIf="isLoaded"&#62;&#60;/div&#62;&#60;/div&#62;<br /><br />
-      <strong>Vue:</strong><br />&#60;div class="skeleton-{{randomSkeletonName}}"&#62;&#60;div v-if="isLoaded"&#62;&#60;/div&#62;&#60;/div&#62;<br /><br />
-      <strong>React:</strong><br />&#60;div class="skeleton-{{randomSkeletonName}}"&#62;&#123;isLoaded &#38;&#38;&#60;div&#62;&#60;/div&#62;&#125;&#60;/div&#62;
-    </p>
-  </div>
+    <strong>Angular:</strong><br />&#60;div class="skeleton-{{randomSkeletonName}}"&#62;&#60;div *ngIf="isLoaded"&#62;&#60;/div&#62;&#60;/div&#62;<br /><br />
+    <strong>Vue:</strong><br />&#60;div class="skeleton-{{randomSkeletonName}}"&#62;&#60;div v-if="isLoaded"&#62;&#60;/div&#62;&#60;/div&#62;<br /><br />
+    <strong>React:</strong><br />&#60;div class="skeleton-{{randomSkeletonName}}"&#62;&#123;isLoaded &#38;&#38;&#60;div&#62;&#60;/div&#62;&#125;&#60;/div&#62;
+  </p>
+</div>
 
 </div>
 
@@ -394,8 +425,8 @@
 
 
 <ng-template #userMenu let-position>
-	<section class="user-menu">
-		<div (click)="addCircle(position);close();">Add Circle</div>
-		<div (click)="addRectangle(position);close();">Add Rectangle / Square</div>
-	</section>
+  <section class="user-menu">
+    <div (click)="addCircle(position);close();">Add Circle</div>
+    <div (click)="addRectangle(position);close();">Add Rectangle / Square</div>
+  </section>
 </ng-template>

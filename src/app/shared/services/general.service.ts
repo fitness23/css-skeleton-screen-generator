@@ -1,16 +1,14 @@
 ﻿import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from "@angular/common/http";
-import { Observable } from 'rxjs/Observable';
-import 'rxjs/Rx';
+import { ShapeTemplate } from '../interfaces/shape-template-interface';
 
 @Injectable()
 export class GeneralService {
 
-    constructor(private http: HttpClient) { }
+    constructor() { }
 
     presetOption1()
     {
-        let option1 = {
+        let option1: ShapeTemplate = {
             "canvasHeight": 400,
             "repeatDesign": 133,
             "shapes": [
@@ -184,7 +182,7 @@ export class GeneralService {
 
     presetOption2()
     {
-        let option2 = {
+        let option2: ShapeTemplate = {
             "canvasHeight": 170,
             "repeatDesign": 170,
             "shapes": [
@@ -369,7 +367,7 @@ export class GeneralService {
     {
     
     
-        let option3 = {
+        let option3: ShapeTemplate = {
             "canvasHeight": 290,
             "repeatDesign": 290,
             "shapes": [
