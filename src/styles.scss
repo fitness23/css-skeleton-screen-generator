@@ -1175,8 +1175,11 @@
 
   .tip{
     background-color: #fff7e0;
-    width: 450px;
     padding: 8px 12px;
+
+    @media #{$desktopAndTabletView} {
+      width: 450px;
+    }
   }
   
   

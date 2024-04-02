@@ -105,7 +105,7 @@
                 @if (myForm.controls['horizontalPositioningStartingPoint'].value != 'center') {
                   <div class="block">
                     <label>Amount</label>
-                    <input type="number" min="0" formControlName="horizontalPositioningAmount" />
+                    <input type="number" min="0" formControlName="horizontalPositioningAmount" (focus)="onFocus()" (blur)="onBlur()" />
                   </div>
                   <div class="block">
                     <label>Unit</label>
@@ -135,7 +135,7 @@
                 @if (myForm.controls['verticalPositioningStartingPoint'].value != 'center') {
                   <div class="block">
                     <label>Amount</label>
-                    <input type="number" min="0" formControlName="verticalPositioningAmount" />
+                    <input type="number" min="0" formControlName="verticalPositioningAmount" (focus)="onFocus()" (blur)="onBlur()" />
                   </div>
                   <div class="block">
                     <label>Unit</label>
@@ -157,7 +157,7 @@
                 <div class="itemCoreDetailsContainer">
                   <div class="block">
                     <label>Amount</label>
-                    <input type="number" min="0" formControlName="width" />
+                    <input type="number" min="0" formControlName="width" (focus)="onFocus()" (blur)="onBlur()" />
                   </div>
                   <div class="block">
                     <label>Unit</label>
@@ -179,7 +179,7 @@
                   @if (myForm.controls['widthCalc'].value != null) {
                     <div class="block">
                       <label>Amount</label>
-                      <input type="number" min="0" formControlName="widthCalcAmount" />
+                      <input type="number" min="0" formControlName="widthCalcAmount" (focus)="onFocus()" (blur)="onBlur()" />
                     </div>
                   }
                   @if ((myForm.controls['widthCalc'].value != null) && ((myForm.controls['widthCalc'].value === '-') || (myForm.controls['widthCalc'].value === '+'))) {
@@ -202,7 +202,7 @@
                 <div class="itemCoreDetailsContainer">
                   <div class="block">
                     <label>Amount</label>
-                    <input type="number" min="0" formControlName="height" />
+                    <input type="number" min="0" formControlName="height" (focus)="onFocus()" (blur)="onBlur()" />
                   </div>
                   <div class="block">
                     <label>Unit</label>
@@ -224,7 +224,7 @@
                   @if (myForm.controls['heightCalc'].value != null) {
                     <div class="block">
                       <label>Amount</label>
-                      <input type="number" min="0" formControlName="heightCalcAmount" />
+                      <input type="number" min="0" formControlName="heightCalcAmount" (focus)="onFocus()" (blur)="onBlur()" />
                     </div>
                   }
                   @if ((myForm.controls['heightCalc'].value != null) && ((myForm.controls['heightCalc'].value === '-') || (myForm.controls['heightCalc'].value === '+'))) {
@@ -247,7 +247,7 @@
                 <div class="itemCoreDetailsContainer">
                   <div class="block">
                     <label>Amount</label>
-                    <input type="number" min="0" formControlName="diameter" (keyup)="syncHeight()" (change)="syncHeight()" />
+                    <input type="number" min="0" formControlName="diameter" (keyup)="syncHeight()" (change)="syncHeight()" (focus)="onFocus()" (blur)="onBlur()" />
                   </div>
                   <div class="block">
                     <label>Unit</label>

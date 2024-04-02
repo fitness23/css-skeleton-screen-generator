@@ -26,6 +26,7 @@ import { CommonModule } from '@angular/common';
 })
 export class AppComponent implements OnInit {
 
+  isFocused: boolean = false;
   public myForm!: FormGroup;
   newShapeColor: string = "#cccccc";
   canvasColor: string = "#ffffff";
@@ -106,6 +107,15 @@ export class AppComponent implements OnInit {
 
       
 
+  }
+
+
+  onFocus() {
+    this.isFocused = true;
+  }
+
+  onBlur() {
+    this.isFocused = false;
   }
 
 
@@ -192,7 +202,10 @@ export class AppComponent implements OnInit {
       {
           if ((this.highlightedItem != -1))
           {
-              this.deleteItem(this.highlightedItem);
+              // Only delete if we are NOT editing an item
+              if ((this.isFocused === false)){
+                this.deleteItem(this.highlightedItem);
+              }
           }
           else{
               this.showModal = true;
