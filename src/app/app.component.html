@@ -373,7 +373,7 @@
         </div>
         <div class="block">
           <label>Duration</label>
-          <input type="number" min="0" [(ngModel)]="playShimmerDuration" (change)="generate()" (keyup)="generate()" min="0.5" step="0.1" />
+          <input type="number" [(ngModel)]="playShimmerDuration" (change)="generate()" (keyup)="generate()" min="0.5" step="0.1" />
         </div>
       </div>
     }
@@ -388,11 +388,19 @@
         </div>
         <div class="block">
           <label>Angle</label>
-          <input type="number" min="0" [(ngModel)]="shimmerAngle" (change)="generate()" (keyup)="generate()" min="1" step="1" />
+          <input type="number" [(ngModel)]="shimmerAngle" (change)="generate()" (keyup)="generate()" min="1" step="1" />
         </div>
         <div class="block">
           <label>Width</label>
-          <input type="number" min="0" [(ngModel)]="shimmerWidth" (change)="generate()" (keyup)="generate()" min="1" step="1" />
+          <input type="number" [(ngModel)]="shimmerWidth" (change)="generate()" (keyup)="generate()" min="1" step="1" />
+        </div>
+        <div class="block">
+          <label>Start</label>
+          <input type="number" [(ngModel)]="shimmerStartPosition" (change)="generate()" (keyup)="generate()" step="1" />
+        </div>
+        <div class="block">
+          <label>End</label>
+          <input type="number" [(ngModel)]="shimmerEndPosition" (change)="generate()" (keyup)="generate()" min="1" step="1" />
         </div>
       </div>
   </li>

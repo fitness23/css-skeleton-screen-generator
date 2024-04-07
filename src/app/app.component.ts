@@ -49,6 +49,9 @@ export class AppComponent implements OnInit {
 
   shimmerAngle: number = 94;
   shimmerWidth: number = 90;
+
+  shimmerStartPosition: number = -20;
+  shimmerEndPosition: number = 120;
   
   designCanvasTempBackgroundImage: any;
   tempBackgroundXPos: number = 100;
@@ -226,7 +229,10 @@ export class AppComponent implements OnInit {
               }
           }
           else{
-              this.showModal = true;
+            // Only show the modal if there is a background image to start with
+            if ((this.designCanvasTempBackgroundImage != null)){
+                this.showModal = true;
+            }
           }
       }
   }
@@ -845,7 +851,7 @@ export class AppComponent implements OnInit {
             
                             });
 
-                          this.generatedCss = this.generatedCss + " ); -webkit-mask-repeat : repeat-y; -webkit-mask-size : " + this.shimmerWidth+"px " + this.canvasHeight+"px; -webkit-mask-position: -20% 0;"; /* highlight */
+                          this.generatedCss = this.generatedCss + " ); -webkit-mask-repeat : repeat-y; -webkit-mask-size : " + this.shimmerWidth+"px " + this.canvasHeight+"px; -webkit-mask-position: "+this.shimmerStartPosition+"% 0;"; /* highlight */
                           this.generatedCss = this.generatedCss + "background-image: "; /* highlight */
 
                           designDataReversed.forEach((x, index) => {
@@ -1004,7 +1010,7 @@ export class AppComponent implements OnInit {
 
               });
 
-              this.generatedCss = this.generatedCss + "background-position: -20% 0,";
+              this.generatedCss = this.generatedCss + "background-position: "+this.shimmerStartPosition+"% 0,";
 
               designDataReversed.forEach((x, index) => {
               
@@ -1119,12 +1125,12 @@ export class AppComponent implements OnInit {
           /* Animation START */
           if ((this.shimmerType == 0))
           {
-              this.generatedCss = this.generatedCss + "@keyframes shineForSkeleton-" + this.randomSkeletonName +" {to {-webkit-mask-position: 120% 0}}";
+              this.generatedCss = this.generatedCss + "@keyframes shineForSkeleton-" + this.randomSkeletonName +" {to {-webkit-mask-position: "+this.shimmerEndPosition+"% 0}}";
           }
 
           if ((this.shimmerType == 1))
           {
-              this.generatedCss = this.generatedCss + "@keyframes shineForSkeleton-" + this.randomSkeletonName +" {to {background-position: 120% 0,";
+              this.generatedCss = this.generatedCss + "@keyframes shineForSkeleton-" + this.randomSkeletonName +" {to {background-position: "+this.shimmerEndPosition+"% 0,";
 
               designDataReversed.forEach((x, index) => {
 
