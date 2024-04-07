@@ -227,6 +227,11 @@ export class AppComponent implements OnInit {
           this.canvasColor = "#E1E1E1";
           this.shimmerColor = "rgb(255,255,255)";
       }
+      if ((this.shimmerType == 2))
+      {
+          this.canvasColor = "#ffffff";
+          this.shimmerColor = "rgb(102,102,102)";
+      }
   }
 
 
@@ -963,6 +968,95 @@ export class AppComponent implements OnInit {
 
               /* Begin initial values END */
           }
+
+          if ((this.shimmerType == 2))
+          {
+
+              /* Begin initial values START */
+                          /* BLOCK 1 START */
+                          this.generatedCss = this.generatedCss + ".skeleton-" + this.randomSkeletonName+":empty {";
+                          this.generatedCss = this.generatedCss + "position: relative; height: " + this.canvasHeight+"px; background-color: " + this.canvasColor+"; border-radius: "+this.canvasBorderRadiusTopLeft+"px "+this.canvasBorderRadiusTopRight+"px "+this.canvasBorderRadiusBottomRight+"px "+this.canvasBorderRadiusBottomLeft+"px; ";
+                          this.generatedCss = this.generatedCss + "}";
+
+                          
+                          /* BLOCK 1 END */
+
+                          /* BLOCK 2 START */
+                          this.generatedCss = this.generatedCss + ".skeleton-" + this.randomSkeletonName+":empty:before {";
+                          this.generatedCss = this.generatedCss + "content: ' '; position: absolute; z-index: "+this.shapesZIndex+"; width: 100%; height: " + this.canvasHeight+"px;";
+                          this.generatedCss = this.generatedCss + "background-image: "; /* highlight */
+
+                          designDataReversed.forEach((x, index) => {
+                              if ((x.type == "rectangle"))
+                              {
+                                  // Since rectangles are only straight angles we can't do an antialias option anyway
+                                  this.generatedCss = this.generatedCss + "linear-gradient( "+x.color+" "+this.determineRectangleHeightResultView(x)+", transparent 0 )";
+                              }
+                              if ((x.type == "circle")) {
+                                  if ((x.antialias == false))
+                                  {
+                                      this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.diameter! / 2 + "px at " + x.diameter! / 2 + "px " + x.diameter! / 2 + "px, " + x.color + " 99%, transparent 0 )";
+                                  }
+                                  else
+                                  {
+                                      this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.diameter! / 2 + "px at " + x.diameter! / 2 + "px " + x.diameter! / 2 + "px, " + x.color + " " + (x.diameter! / 2 - 1) + "px, transparent " + x.diameter! / 2 + "px )";
+                                  }
+                              }
+
+                              /* Do a comma for the next one, or a semicolon for the last one START */
+                              if (index == designDataReversed.length - 1) {
+                                  this.generatedCss = this.generatedCss + ";";
+                              }
+                              else
+                              {
+                                  this.generatedCss = this.generatedCss + ",";
+                              }
+                              /* Do a comma for the next one, or a semicolon for the last one END */
+
+                          });
+
+                          this.generatedCss = this.generatedCss + "background-repeat: repeat-y;";
+                          this.generatedCss = this.generatedCss + "background-size: ";
+
+                          designDataReversed.forEach((x, index) => {
+                              if ((x.type == "rectangle")) {
+                                  this.generatedCss = this.generatedCss + "" + this.determineRectangleWidth(x) + " " + this.repeatDesign + "px";
+                              }
+                              if ((x.type == "circle")) {
+                                  this.generatedCss = this.generatedCss + "" + x.diameter + "" + x.diameterMeasurement + " " + this.repeatDesign + "px";
+                              }
+
+                              /* Do a comma for the next one, or a semicolon for the last one START */
+                              if (index == designDataReversed.length - 1) {
+                                  this.generatedCss = this.generatedCss + ";";
+                              }
+                              else {
+                                  this.generatedCss = this.generatedCss + ",";
+                              }
+                              /* Do a comma for the next one, or a semicolon for the last one END */
+
+                          });
+
+                          this.generatedCss = this.generatedCss + "background-position: ";
+
+                          designDataReversed.forEach((x, index) => {
+                          
+                                  this.generatedCss = this.generatedCss + "" + this.determineHorizontalPositioningOfShape(x) + " " + this.determineVerticalPositioningOfShape(x) + "";
+                              
+
+                              /* Do a comma for the next one, or a semicolon for the last one START */
+                                  if (index == designDataReversed.length - 1) {
+                                  this.generatedCss = this.generatedCss + ";";
+                              }
+                              else {
+                                  this.generatedCss = this.generatedCss + ",";
+                              }
+                              /* Do a comma for the next one, or a semicolon for the last one END */
+
+                          });
+                          /* BLOCK 2 END */
+                          /* Begin initial values END */
+          }
           
           this.generatedCss = this.generatedCss + "animation: shineForSkeleton-" + this.randomSkeletonName + " " + this.playShimmerDuration + "s infinite;}";
 
@@ -993,6 +1087,11 @@ export class AppComponent implements OnInit {
               });
   
               this.generatedCss = this.generatedCss + "}}";
+          }
+
+          if ((this.shimmerType == 2))
+          {
+              this.generatedCss = this.generatedCss + "@keyframes shineForSkeleton-" + this.randomSkeletonName +" {0% {opacity: 1;}50% {opacity: 0;}100% {opacity: 1;}}";
           }
           /* Animation END */
 

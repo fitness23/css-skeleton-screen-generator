@@ -368,16 +368,19 @@
           <select [(ngModel)]="shimmerType" (change)="changeCanvasColorBasedOnShimmerType();generate()">
             <option [ngValue]="0">Affect shapes only</option>
             <option [ngValue]="1">Affect whole panel</option>
+            <option [ngValue]="2">Fade in and out</option>
           </select>
         </div>
         <div class="block">
           <label>Duration</label>
           <input type="number" min="0" [(ngModel)]="playShimmerDuration" (change)="generate()" (keyup)="generate()" min="0.5" step="0.1" />
         </div>
+        @if (shimmerType < 2) {
         <div class="block" style="position: relative;">
           <label>Color</label>
           <input class="colorToChoose" [(colorPicker)]="shimmerColor" [style.background]="shimmerColor" [cpOutputFormat]="'rgba'" [cpPosition]="'top-left'" [cpWidth]="'200'" (colorPickerChange)="generate()" />
         </div>
+        }
       </div>
     }
   </li>
