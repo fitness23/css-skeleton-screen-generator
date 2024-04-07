@@ -380,6 +380,14 @@
           <label>Color</label>
           <input class="colorToChoose" [(colorPicker)]="shimmerColor" [style.background]="shimmerColor" [cpOutputFormat]="'rgba'" [cpPosition]="'top-left'" [cpWidth]="'200'" (colorPickerChange)="generate()" />
         </div>
+        <div class="block">
+          <label>Angle</label>
+          <input type="number" min="0" [(ngModel)]="shimmerAngle" (change)="generate()" (keyup)="generate()" min="1" step="1" />
+        </div>
+        <div class="block">
+          <label>Width</label>
+          <input type="number" min="0" [(ngModel)]="shimmerWidth" (change)="generate()" (keyup)="generate()" min="1" step="1" />
+        </div>
         }
       </div>
     }

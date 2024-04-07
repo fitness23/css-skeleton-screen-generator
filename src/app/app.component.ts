@@ -46,6 +46,9 @@ export class AppComponent implements OnInit {
   randomSkeletonName: string = "";
   generatedCss: string = "";
   playShimmerDuration: number = 2;
+
+  shimmerAngle: number = 94;
+  shimmerWidth: number = 90;
   
   designCanvasTempBackgroundImage: any;
   tempBackgroundXPos: number = 100;
@@ -808,7 +811,7 @@ export class AppComponent implements OnInit {
                           /* BLOCK 2 START */
                           this.generatedCss = this.generatedCss + ".skeleton-" + this.randomSkeletonName+":empty:before {";
                           this.generatedCss = this.generatedCss + "content: ' '; position: absolute; z-index: "+this.shapesZIndex+"; width: 100%; height: " + this.canvasHeight+"px;";
-                          this.generatedCss = this.generatedCss + "-webkit-mask-image: linear-gradient( 100deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0) 80% ); -webkit-mask-repeat : repeat-y; -webkit-mask-size : 50px " + this.canvasHeight+"px; -webkit-mask-position: -20% 0;"; /* highlight */
+                          this.generatedCss = this.generatedCss + "-webkit-mask-image: linear-gradient( "+this.shimmerAngle+"deg, rgba(255, 255, 255, 0) 20%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0) 80% ); -webkit-mask-repeat : repeat-y; -webkit-mask-size : " + this.shimmerWidth+"px " + this.canvasHeight+"px; -webkit-mask-position: -20% 0;"; /* highlight */
                           this.generatedCss = this.generatedCss + "background-image: "; /* highlight */
 
                           designDataReversed.forEach((x, index) => {
@@ -895,7 +898,7 @@ export class AppComponent implements OnInit {
               /* Begin initial values START */
               this.generatedCss = this.generatedCss + ".skeleton-" + this.randomSkeletonName+":empty {";
               this.generatedCss = this.generatedCss + "height: " + this.canvasHeight+"px; background-color: " + this.canvasColor+"; border-radius: "+this.canvasBorderRadiusTopLeft+"px "+this.canvasBorderRadiusTopRight+"px "+this.canvasBorderRadiusBottomRight+"px "+this.canvasBorderRadiusBottomLeft+"px; ";
-              this.generatedCss = this.generatedCss + "background-image: linear-gradient( 100deg, rgba("+amendedShimmerColor2+", 0), rgba("+amendedShimmerColor2+", 0.5) 50%, rgba("+amendedShimmerColor2+", 0) 80% ),"; /* highlight */
+              this.generatedCss = this.generatedCss + "background-image: linear-gradient( "+this.shimmerAngle+"deg, rgba("+amendedShimmerColor2+", 0) 20%, rgba("+amendedShimmerColor2+", 0.5) 50%, rgba("+amendedShimmerColor2+", 0) 80% ),"; /* highlight */
 
               designDataReversed.forEach((x, index) => {
                   if ((x.type == "rectangle"))
@@ -927,7 +930,7 @@ export class AppComponent implements OnInit {
               });
 
               this.generatedCss = this.generatedCss + "background-repeat: repeat-y;";
-              this.generatedCss = this.generatedCss + "background-size: 50px " + this.canvasHeight+"px,";
+              this.generatedCss = this.generatedCss + "background-size: " + this.shimmerWidth+"px " + this.canvasHeight+"px,";
 
               designDataReversed.forEach((x, index) => {
                   if ((x.type == "rectangle")) {
