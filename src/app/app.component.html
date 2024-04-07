@@ -375,10 +375,16 @@
           <label>Duration</label>
           <input type="number" min="0" [(ngModel)]="playShimmerDuration" (change)="generate()" (keyup)="generate()" min="0.5" step="0.1" />
         </div>
-        @if (shimmerType < 2) {
+      </div>
+    }
+  </li>
+  @if (showShimmer == true && shimmerType < 2) {
+  <li class="multipleQuestions">
+    <div class="title">Shimmer Gradient Advanced Options</div>
+      <div class="options">
         <div class="block" style="position: relative;">
           <label>Color</label>
-          <input class="colorToChoose" [(colorPicker)]="shimmerColor" [style.background]="shimmerColor" [cpOutputFormat]="'rgba'" [cpPosition]="'top-left'" [cpWidth]="'200'" (colorPickerChange)="generate()" />
+          <input class="colorToChoose" [(colorPicker)]="shimmerColor" [style.background]="shimmerColor" [cpOutputFormat]="'rgba'" [cpPosition]="'top-right'" [cpWidth]="'200'" (colorPickerChange)="generate()" />
         </div>
         <div class="block">
           <label>Angle</label>
@@ -388,10 +394,9 @@
           <label>Width</label>
           <input type="number" min="0" [(ngModel)]="shimmerWidth" (change)="generate()" (keyup)="generate()" min="1" step="1" />
         </div>
-        }
       </div>
-    }
   </li>
+  }
 
   
 </ul>
