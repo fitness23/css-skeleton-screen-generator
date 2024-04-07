@@ -67,6 +67,21 @@ export class AppComponent implements OnInit {
 
   showModal: boolean = false;
 
+  shimmerGradientStages = [
+    {
+        "opacity": 0,
+        "step": 20
+    },
+    {
+        "opacity": 0.5,
+        "step": 50
+    },
+    {
+        "opacity": 0,
+        "step": 80
+    }
+  ]
+
 
   constructor(private generalService: GeneralService, private fb: FormBuilder, public overlay: Overlay, public viewContainerRef: ViewContainerRef) { }
 
@@ -811,7 +826,26 @@ export class AppComponent implements OnInit {
                           /* BLOCK 2 START */
                           this.generatedCss = this.generatedCss + ".skeleton-" + this.randomSkeletonName+":empty:before {";
                           this.generatedCss = this.generatedCss + "content: ' '; position: absolute; z-index: "+this.shapesZIndex+"; width: 100%; height: " + this.canvasHeight+"px;";
-                          this.generatedCss = this.generatedCss + "-webkit-mask-image: linear-gradient( "+this.shimmerAngle+"deg, rgba(255, 255, 255, 0) 20%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0) 80% ); -webkit-mask-repeat : repeat-y; -webkit-mask-size : " + this.shimmerWidth+"px " + this.canvasHeight+"px; -webkit-mask-position: -20% 0;"; /* highlight */
+                          this.generatedCss = this.generatedCss + "-webkit-mask-image: linear-gradient( "+this.shimmerAngle+"deg, "; /* highlight */
+                          
+                          this.shimmerGradientStages.forEach((x, index) => {
+                
+                            // Since rectangles are only straight angles we can't do an antialias option anyway
+                            this.generatedCss = this.generatedCss + "rgba(255, 255, 255, "+x.opacity+") "+x.step+"%";
+            
+                            /* Do a comma for the next one, or a semicolon for the last one START */
+                            if (index == this.shimmerGradientStages.length - 1) {
+                                this.generatedCss = this.generatedCss + "";
+                            }
+                            else
+                            {
+                                this.generatedCss = this.generatedCss + ",";
+                            }
+                            /* Do a comma for the next one, or a semicolon for the last one END */
+            
+                            });
+
+                          this.generatedCss = this.generatedCss + " ); -webkit-mask-repeat : repeat-y; -webkit-mask-size : " + this.shimmerWidth+"px " + this.canvasHeight+"px; -webkit-mask-position: -20% 0;"; /* highlight */
                           this.generatedCss = this.generatedCss + "background-image: "; /* highlight */
 
                           designDataReversed.forEach((x, index) => {
@@ -898,7 +932,26 @@ export class AppComponent implements OnInit {
               /* Begin initial values START */
               this.generatedCss = this.generatedCss + ".skeleton-" + this.randomSkeletonName+":empty {";
               this.generatedCss = this.generatedCss + "height: " + this.canvasHeight+"px; background-color: " + this.canvasColor+"; border-radius: "+this.canvasBorderRadiusTopLeft+"px "+this.canvasBorderRadiusTopRight+"px "+this.canvasBorderRadiusBottomRight+"px "+this.canvasBorderRadiusBottomLeft+"px; ";
-              this.generatedCss = this.generatedCss + "background-image: linear-gradient( "+this.shimmerAngle+"deg, rgba("+amendedShimmerColor2+", 0) 20%, rgba("+amendedShimmerColor2+", 0.5) 50%, rgba("+amendedShimmerColor2+", 0) 80% ),"; /* highlight */
+              this.generatedCss = this.generatedCss + "background-image: linear-gradient( "+this.shimmerAngle+"deg, "; /* highlight */
+
+              this.shimmerGradientStages.forEach((x, index) => {
+                
+                // Since rectangles are only straight angles we can't do an antialias option anyway
+                this.generatedCss = this.generatedCss + "rgba("+amendedShimmerColor2+", "+x.opacity+") "+x.step+"%";
+
+                /* Do a comma for the next one, or a semicolon for the last one START */
+                if (index == this.shimmerGradientStages.length - 1) {
+                    this.generatedCss = this.generatedCss + "";
+                }
+                else
+                {
+                    this.generatedCss = this.generatedCss + ",";
+                }
+                /* Do a comma for the next one, or a semicolon for the last one END */
+
+                });
+
+              this.generatedCss = this.generatedCss + " ),"; /* highlight */
 
               designDataReversed.forEach((x, index) => {
                   if ((x.type == "rectangle"))
