@@ -1153,7 +1153,7 @@ export class AppComponent implements OnInit {
 
           if ((this.shimmerType == 2))
           {
-              this.generatedCss = this.generatedCss + "@keyframes shineForSkeleton-" + this.randomSkeletonName +" {0% {opacity: 1;}50% {opacity: 0;}100% {opacity: 1;}}";
+              this.generatedCss = this.generatedCss + "@keyframes shineForSkeleton-" + this.randomSkeletonName +" {0% {opacity: 1;}50% {opacity: 0.5;}100% {opacity: 1;}}";
           }
           /* Animation END */
 
