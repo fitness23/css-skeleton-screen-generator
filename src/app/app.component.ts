@@ -28,30 +28,13 @@ export class AppComponent implements OnInit {
 
   isFocused: boolean = false;
   public myForm!: FormGroup;
+  public canvasPropertiesForm!: FormGroup;
   newShapeColor: string = "#cccccc";
-  canvasColor: string = "#ffffff";
-  shimmerColor: string = "rgb(102,102,102)";
-  canvasBorderRadiusTopLeft: number = 0;
-  canvasBorderRadiusTopRight: number = 0;
-  canvasBorderRadiusBottomRight: number = 0;
-  canvasBorderRadiusBottomLeft: number = 0;
-  canvasHeight: number = 170;
-  repeatDesign: number = 170;
-  shapesZIndex: number = 1;
-  showShimmer: boolean = true;
-  shimmerType: number = 0;
   selectedTemplate: string = "";
   highlightedItem: number = -1;
   selectedType: string | null = "";
   randomSkeletonName: string = "";
   generatedCss: string = "";
-  playShimmerDuration: number = 2;
-
-  shimmerAngle: number = 94;
-  shimmerWidth: number = 90;
-
-  shimmerStartPosition: number = -20;
-  shimmerEndPosition: number = 120;
   
   designCanvasTempBackgroundImage: any;
   tempBackgroundXPos: number = 100;
@@ -91,6 +74,25 @@ export class AppComponent implements OnInit {
   
   ngOnInit() {
 
+    this.canvasPropertiesForm = this.fb.group({
+        canvasColor: ["#ffffff"],
+        canvasHeight: [170],
+        repeatDesign: [170],
+        shapesZIndex: [1],
+        canvasBorderRadiusTopLeft: [0],
+        canvasBorderRadiusTopRight: [0],
+        canvasBorderRadiusBottomRight: [0],
+        canvasBorderRadiusBottomLeft: [0],
+        showShimmer: [true],
+        shimmerType: 0,
+        playShimmerDuration: [2],
+        shimmerAngle: [94],
+        shimmerColor: ["rgb(102,102,102)"],
+        shimmerWidth: [90],
+        shimmerStartPosition: [-20],
+        shimmerEndPosition: [120]
+      });
+
       this.randomSkeletonName = this.generateRandomSkeletonName();
 
       this.myForm = this.fb.group({
@@ -125,6 +127,11 @@ export class AppComponent implements OnInit {
       );
 
       this.createTemplate('option1');
+
+      
+
+
+
 
       
 
@@ -241,20 +248,20 @@ export class AppComponent implements OnInit {
 
   changeCanvasColorBasedOnShimmerType()
   {
-      if ((this.shimmerType == 0))
+      if ((this.canvasPropertiesForm['controls']['shimmerType'].value == 0))
       {
-          this.canvasColor = "#ffffff";
-          this.shimmerColor = "rgb(102,102,102)";
+          this.canvasPropertiesForm.controls['canvasColor'].patchValue("#ffffff");
+          this.canvasPropertiesForm.controls['shimmerColor'].patchValue("rgb(102,102,102)");
       }
-      if ((this.shimmerType == 1))
+      if ((this.canvasPropertiesForm['controls']['shimmerType'].value == 1))
       {
-          this.canvasColor = "#E1E1E1";
-          this.shimmerColor = "rgb(255,255,255)";
+          this.canvasPropertiesForm.controls['canvasColor'].patchValue("#E1E1E1");
+          this.canvasPropertiesForm.controls['shimmerColor'].patchValue("rgb(255,255,255)");
       }
-      if ((this.shimmerType == 2))
+      if ((this.canvasPropertiesForm['controls']['shimmerType'].value == 2))
       {
-          this.canvasColor = "#ffffff";
-          this.shimmerColor = "rgb(102,102,102)";
+          this.canvasPropertiesForm.controls['canvasColor'].patchValue("#ffffff");
+          this.canvasPropertiesForm.controls['shimmerColor'].patchValue("rgb(102,102,102)");
       }
   }
 
@@ -334,20 +341,20 @@ export class AppComponent implements OnInit {
 
       if ((option === "option1")){
         this.designData = this['option1'].shapes;
-        this.canvasHeight = this['option1'].canvasHeight;
-        this.repeatDesign = this['option1'].repeatDesign;
+        this.canvasPropertiesForm.controls['canvasHeight'].patchValue(this['option1'].canvasHeight);
+        this.canvasPropertiesForm.controls['repeatDesign'].patchValue(this['option1'].repeatDesign);
       }
 
       if ((option === "option2")){
         this.designData = this['option2'].shapes;
-        this.canvasHeight = this['option2'].canvasHeight;
-        this.repeatDesign = this['option2'].repeatDesign;
+        this.canvasPropertiesForm.controls['canvasHeight'].patchValue(this['option2'].canvasHeight);
+        this.canvasPropertiesForm.controls['repeatDesign'].patchValue(this['option2'].repeatDesign);
       }
 
       if ((option === "option3")){
         this.designData = this['option3'].shapes;
-        this.canvasHeight = this['option3'].canvasHeight;
-        this.repeatDesign = this['option3'].repeatDesign;
+        this.canvasPropertiesForm.controls['canvasHeight'].patchValue(this['option3'].canvasHeight);
+        this.canvasPropertiesForm.controls['repeatDesign'].patchValue(this['option3'].repeatDesign);
       }
 
 
@@ -563,7 +570,7 @@ export class AppComponent implements OnInit {
           startingNumber = record.height;
       }
       else {
-          startingNumber = (record.height! * this.repeatDesign) / 100;
+          startingNumber = (record.height! * this.canvasPropertiesForm['controls']['repeatDesign'].value) / 100;
       }
 
 
@@ -635,7 +642,6 @@ export class AppComponent implements OnInit {
   generate()
   {
       console.log("Generate!");
-      console.log(this.shimmerColor);
 
       // Throw the array into reverse because css puts the first item at the top of the layer START
       let designDataReversed: ShapeDetails[] = structuredClone(this.designData).reverse();
@@ -650,12 +656,12 @@ export class AppComponent implements OnInit {
       this.generatedCss = "";
 
 
-      if ((this.showShimmer == false))
+      if ((this.canvasPropertiesForm['controls']['showShimmer'].value == false))
       {
           /* Begin initial values START */
           /* BLOCK 1 START */
           this.generatedCss = this.generatedCss + ".skeleton-" + this.randomSkeletonName+":empty {";
-          this.generatedCss = this.generatedCss + "height: " + this.canvasHeight+"px; background-color: " + this.canvasColor+"; border-radius: "+this.canvasBorderRadiusTopLeft+"px "+this.canvasBorderRadiusTopRight+"px "+this.canvasBorderRadiusBottomRight+"px "+this.canvasBorderRadiusBottomLeft+"px; ";
+          this.generatedCss = this.generatedCss + "height: " + this.canvasPropertiesForm['controls']['canvasHeight'].value +"px; background-color: " + this.canvasPropertiesForm['controls']['canvasColor'].value +"; border-radius: "+this.canvasPropertiesForm['controls']['canvasBorderRadiusTopLeft'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusTopRight'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusBottomRight'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusBottomLeft'].value+"px; ";
           this.generatedCss = this.generatedCss + "background-image: "; /* highlight */
 
           designDataReversed.forEach((x, index) => {
@@ -692,10 +698,10 @@ export class AppComponent implements OnInit {
 
           designDataReversed.forEach((x, index) => {
               if ((x.type == "rectangle")) {
-                  this.generatedCss = this.generatedCss + "" + this.determineRectangleWidth(x) + " " + this.repeatDesign + "px";
+                  this.generatedCss = this.generatedCss + "" + this.determineRectangleWidth(x) + " " + this.canvasPropertiesForm['controls']['repeatDesign'].value + "px";
               }
               if ((x.type == "circle")) {
-                  this.generatedCss = this.generatedCss + "" + x.diameter + "" + x.diameterMeasurement + " " + this.repeatDesign + "px";
+                  this.generatedCss = this.generatedCss + "" + x.diameter + "" + x.diameterMeasurement + " " + this.canvasPropertiesForm['controls']['repeatDesign'].value + "px";
               }
 
               /* Do a comma for the next one, or a semicolon for the last one START */
@@ -739,20 +745,20 @@ export class AppComponent implements OnInit {
 
 
 
-      if ((this.showShimmer == true))
+      if ((this.canvasPropertiesForm['controls']['showShimmer'].value == true))
       {
 
-          if ((this.shimmerType == 0))
+          if ((this.canvasPropertiesForm['controls']['shimmerType'].value == 0))
           {
 
-              let amendedShimmerColor1 = this.shimmerColor.replace("rgb", "rgba");
+              let amendedShimmerColor1 = this.canvasPropertiesForm['controls']['shimmerColor'].value.replace("rgb", "rgba");
               let amendedShimmerColor2 = amendedShimmerColor1.replace(")", ",1)");
               console.log(amendedShimmerColor2);
 
               /* Begin initial values START */
                           /* BLOCK 1 START */
                           this.generatedCss = this.generatedCss + ".skeleton-" + this.randomSkeletonName+":empty {";
-                          this.generatedCss = this.generatedCss + "position: relative; height: " + this.canvasHeight+"px; background-color: " + this.canvasColor+"; border-radius: "+this.canvasBorderRadiusTopLeft+"px "+this.canvasBorderRadiusTopRight+"px "+this.canvasBorderRadiusBottomRight+"px "+this.canvasBorderRadiusBottomLeft+"px; ";
+                          this.generatedCss = this.generatedCss + "position: relative; height: " + this.canvasPropertiesForm['controls']['canvasHeight'].value +"px; background-color: " + this.canvasPropertiesForm['controls']['canvasColor'].value +"; border-radius: "+this.canvasPropertiesForm['controls']['canvasBorderRadiusTopLeft'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusTopRight'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusBottomRight'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusBottomLeft'].value+"px; ";
                           this.generatedCss = this.generatedCss + "background-image: "; /* highlight */
 
                           designDataReversed.forEach((x, index) => {
@@ -789,10 +795,10 @@ export class AppComponent implements OnInit {
 
                           designDataReversed.forEach((x, index) => {
                               if ((x.type == "rectangle")) {
-                                  this.generatedCss = this.generatedCss + "" + this.determineRectangleWidth(x) + " " + this.repeatDesign + "px";
+                                  this.generatedCss = this.generatedCss + "" + this.determineRectangleWidth(x) + " " + this.canvasPropertiesForm['controls']['repeatDesign'].value + "px";
                               }
                               if ((x.type == "circle")) {
-                                  this.generatedCss = this.generatedCss + "" + x.diameter + "" + x.diameterMeasurement + " " + this.repeatDesign + "px";
+                                  this.generatedCss = this.generatedCss + "" + x.diameter + "" + x.diameterMeasurement + " " + this.canvasPropertiesForm['controls']['repeatDesign'].value + "px";
                               }
 
                               /* Do a comma for the next one, or a semicolon for the last one START */
@@ -831,8 +837,8 @@ export class AppComponent implements OnInit {
 
                           /* BLOCK 2 START */
                           this.generatedCss = this.generatedCss + ".skeleton-" + this.randomSkeletonName+":empty:before {";
-                          this.generatedCss = this.generatedCss + "content: ' '; position: absolute; z-index: "+this.shapesZIndex+"; width: 100%; height: " + this.canvasHeight+"px;";
-                          this.generatedCss = this.generatedCss + "-webkit-mask-image: linear-gradient( "+this.shimmerAngle+"deg, "; /* highlight */
+                          this.generatedCss = this.generatedCss + "content: ' '; position: absolute; z-index: "+this.canvasPropertiesForm['controls']['shapesZIndex'].value+"; width: 100%; height: " + this.canvasPropertiesForm['controls']['canvasHeight'].value +"px;";
+                          this.generatedCss = this.generatedCss + "-webkit-mask-image: linear-gradient( "+this.canvasPropertiesForm['controls']['shimmerAngle'].value+"deg, "; /* highlight */
                           
                           this.shimmerGradientStages.forEach((x, index) => {
                 
@@ -851,7 +857,7 @@ export class AppComponent implements OnInit {
             
                             });
 
-                          this.generatedCss = this.generatedCss + " ); -webkit-mask-repeat : repeat-y; -webkit-mask-size : " + this.shimmerWidth+"px " + this.canvasHeight+"px; -webkit-mask-position: "+this.shimmerStartPosition+"% 0;"; /* highlight */
+                          this.generatedCss = this.generatedCss + " ); -webkit-mask-repeat : repeat-y; -webkit-mask-size : " + this.canvasPropertiesForm['controls']['shimmerWidth'].value +"px " + this.canvasPropertiesForm['controls']['canvasHeight'].value +"px; -webkit-mask-position: "+this.canvasPropertiesForm['controls']['shimmerStartPosition'].value+"% 0;"; /* highlight */
                           this.generatedCss = this.generatedCss + "background-image: "; /* highlight */
 
                           designDataReversed.forEach((x, index) => {
@@ -888,10 +894,10 @@ export class AppComponent implements OnInit {
 
                           designDataReversed.forEach((x, index) => {
                               if ((x.type == "rectangle")) {
-                                  this.generatedCss = this.generatedCss + "" + this.determineRectangleWidth(x) + " " + this.repeatDesign + "px";
+                                  this.generatedCss = this.generatedCss + "" + this.determineRectangleWidth(x) + " " + this.canvasPropertiesForm['controls']['repeatDesign'].value + "px";
                               }
                               if ((x.type == "circle")) {
-                                  this.generatedCss = this.generatedCss + "" + x.diameter + "" + x.diameterMeasurement + " " + this.repeatDesign + "px";
+                                  this.generatedCss = this.generatedCss + "" + x.diameter + "" + x.diameterMeasurement + " " + this.canvasPropertiesForm['controls']['repeatDesign'].value + "px";
                               }
 
                               /* Do a comma for the next one, or a semicolon for the last one START */
@@ -926,19 +932,19 @@ export class AppComponent implements OnInit {
                           /* Begin initial values END */
           }
 
-          if ((this.shimmerType == 1))
+          if ((this.canvasPropertiesForm['controls']['shimmerType'].value == 1))
           {
 
-              console.log(this.shimmerColor);
-              let amendedShimmerColor1 = this.shimmerColor.replace("rgb(", "");
+
+              let amendedShimmerColor1 = this.canvasPropertiesForm['controls']['shimmerColor'].value.replace("rgb(", "");
               let amendedShimmerColor2 = amendedShimmerColor1.replace(")", "");
               console.log(amendedShimmerColor2);
               
 
               /* Begin initial values START */
               this.generatedCss = this.generatedCss + ".skeleton-" + this.randomSkeletonName+":empty {";
-              this.generatedCss = this.generatedCss + "height: " + this.canvasHeight+"px; background-color: " + this.canvasColor+"; border-radius: "+this.canvasBorderRadiusTopLeft+"px "+this.canvasBorderRadiusTopRight+"px "+this.canvasBorderRadiusBottomRight+"px "+this.canvasBorderRadiusBottomLeft+"px; ";
-              this.generatedCss = this.generatedCss + "background-image: linear-gradient( "+this.shimmerAngle+"deg, "; /* highlight */
+              this.generatedCss = this.generatedCss + "height: " + this.canvasPropertiesForm['controls']['canvasHeight'].value +"px; background-color: " + this.canvasPropertiesForm['controls']['canvasColor'].value +"; border-radius: "+this.canvasPropertiesForm['controls']['canvasBorderRadiusTopLeft'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusTopRight'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusBottomRight'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusBottomLeft'].value+"px; ";
+              this.generatedCss = this.generatedCss + "background-image: linear-gradient( "+this.canvasPropertiesForm['controls']['shimmerAngle'].value+"deg, "; /* highlight */
 
               this.shimmerGradientStages.forEach((x, index) => {
                 
@@ -989,14 +995,14 @@ export class AppComponent implements OnInit {
               });
 
               this.generatedCss = this.generatedCss + "background-repeat: repeat-y;";
-              this.generatedCss = this.generatedCss + "background-size: " + this.shimmerWidth+"px " + this.canvasHeight+"px,";
+              this.generatedCss = this.generatedCss + "background-size: " + this.canvasPropertiesForm['controls']['shimmerWidth'].value +"px " + this.canvasPropertiesForm['controls']['canvasHeight'].value +"px,";
 
               designDataReversed.forEach((x, index) => {
                   if ((x.type == "rectangle")) {
-                      this.generatedCss = this.generatedCss + "" + this.determineRectangleWidth(x) + " " + this.repeatDesign + "px";
+                      this.generatedCss = this.generatedCss + "" + this.determineRectangleWidth(x) + " " + this.canvasPropertiesForm['controls']['repeatDesign'].value + "px";
                   }
                   if ((x.type == "circle")) {
-                      this.generatedCss = this.generatedCss + "" + x.diameter + "" + x.diameterMeasurement + " " + this.repeatDesign + "px";
+                      this.generatedCss = this.generatedCss + "" + x.diameter + "" + x.diameterMeasurement + " " + this.canvasPropertiesForm['controls']['repeatDesign'].value + "px";
                   }
 
                   /* Do a comma for the next one, or a semicolon for the last one START */
@@ -1010,7 +1016,7 @@ export class AppComponent implements OnInit {
 
               });
 
-              this.generatedCss = this.generatedCss + "background-position: "+this.shimmerStartPosition+"% 0,";
+              this.generatedCss = this.generatedCss + "background-position: "+this.canvasPropertiesForm['controls']['shimmerStartPosition'].value+"% 0,";
 
               designDataReversed.forEach((x, index) => {
               
@@ -1031,13 +1037,13 @@ export class AppComponent implements OnInit {
               /* Begin initial values END */
           }
 
-          if ((this.shimmerType == 2))
+          if ((this.canvasPropertiesForm['controls']['shimmerType'].value == 2))
           {
 
               /* Begin initial values START */
                           /* BLOCK 1 START */
                           this.generatedCss = this.generatedCss + ".skeleton-" + this.randomSkeletonName+":empty {";
-                          this.generatedCss = this.generatedCss + "position: relative; height: " + this.canvasHeight+"px; background-color: " + this.canvasColor+"; border-radius: "+this.canvasBorderRadiusTopLeft+"px "+this.canvasBorderRadiusTopRight+"px "+this.canvasBorderRadiusBottomRight+"px "+this.canvasBorderRadiusBottomLeft+"px; ";
+                          this.generatedCss = this.generatedCss + "position: relative; height: " + this.canvasPropertiesForm['controls']['canvasHeight'].value +"px; background-color: " + this.canvasPropertiesForm['controls']['canvasColor'].value +"; border-radius: "+this.canvasPropertiesForm['controls']['canvasBorderRadiusTopLeft'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusTopRight'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusBottomRight'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusBottomLeft'].value+"px; ";
                           this.generatedCss = this.generatedCss + "}";
 
                           
@@ -1045,7 +1051,7 @@ export class AppComponent implements OnInit {
 
                           /* BLOCK 2 START */
                           this.generatedCss = this.generatedCss + ".skeleton-" + this.randomSkeletonName+":empty:before {";
-                          this.generatedCss = this.generatedCss + "content: ' '; position: absolute; z-index: "+this.shapesZIndex+"; width: 100%; height: " + this.canvasHeight+"px;";
+                          this.generatedCss = this.generatedCss + "content: ' '; position: absolute; z-index: "+this.canvasPropertiesForm['controls']['shapesZIndex'].value+"; width: 100%; height: " + this.canvasPropertiesForm['controls']['canvasHeight'].value +"px;";
                           this.generatedCss = this.generatedCss + "background-image: "; /* highlight */
 
                           designDataReversed.forEach((x, index) => {
@@ -1082,10 +1088,10 @@ export class AppComponent implements OnInit {
 
                           designDataReversed.forEach((x, index) => {
                               if ((x.type == "rectangle")) {
-                                  this.generatedCss = this.generatedCss + "" + this.determineRectangleWidth(x) + " " + this.repeatDesign + "px";
+                                  this.generatedCss = this.generatedCss + "" + this.determineRectangleWidth(x) + " " + this.canvasPropertiesForm['controls']['repeatDesign'].value + "px";
                               }
                               if ((x.type == "circle")) {
-                                  this.generatedCss = this.generatedCss + "" + x.diameter + "" + x.diameterMeasurement + " " + this.repeatDesign + "px";
+                                  this.generatedCss = this.generatedCss + "" + x.diameter + "" + x.diameterMeasurement + " " + this.canvasPropertiesForm['controls']['repeatDesign'].value + "px";
                               }
 
                               /* Do a comma for the next one, or a semicolon for the last one START */
@@ -1120,17 +1126,17 @@ export class AppComponent implements OnInit {
                           /* Begin initial values END */
           }
           
-          this.generatedCss = this.generatedCss + "animation: shineForSkeleton-" + this.randomSkeletonName + " " + this.playShimmerDuration + "s infinite;}";
+          this.generatedCss = this.generatedCss + "animation: shineForSkeleton-" + this.randomSkeletonName + " " + this.canvasPropertiesForm['controls']['playShimmerDuration'].value + "s infinite;}";
 
           /* Animation START */
-          if ((this.shimmerType == 0))
+          if ((this.canvasPropertiesForm['controls']['shimmerType'].value == 0))
           {
-              this.generatedCss = this.generatedCss + "@keyframes shineForSkeleton-" + this.randomSkeletonName +" {to {-webkit-mask-position: "+this.shimmerEndPosition+"% 0}}";
+              this.generatedCss = this.generatedCss + "@keyframes shineForSkeleton-" + this.randomSkeletonName +" {to {-webkit-mask-position: "+this.canvasPropertiesForm['controls']['shimmerEndPosition'].value+"% 0}}";
           }
 
-          if ((this.shimmerType == 1))
+          if ((this.canvasPropertiesForm['controls']['shimmerType'].value == 1))
           {
-              this.generatedCss = this.generatedCss + "@keyframes shineForSkeleton-" + this.randomSkeletonName +" {to {background-position: "+this.shimmerEndPosition+"% 0,";
+              this.generatedCss = this.generatedCss + "@keyframes shineForSkeleton-" + this.randomSkeletonName +" {to {background-position: "+this.canvasPropertiesForm['controls']['shimmerEndPosition'].value+"% 0,";
 
               designDataReversed.forEach((x, index) => {
 
@@ -1151,7 +1157,7 @@ export class AppComponent implements OnInit {
               this.generatedCss = this.generatedCss + "}}";
           }
 
-          if ((this.shimmerType == 2))
+          if ((this.canvasPropertiesForm['controls']['shimmerType'].value == 2))
           {
               this.generatedCss = this.generatedCss + "@keyframes shineForSkeleton-" + this.randomSkeletonName +" {0% {opacity: 1;}50% {opacity: 0.5;}100% {opacity: 1;}}";
           }

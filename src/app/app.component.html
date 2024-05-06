@@ -42,10 +42,10 @@
     </div>
 
     <div class="container">
-      <div id="designCanvas" [style]="{'height': canvasHeight+'px', 'background-color': canvasColor, 'border-radius': canvasBorderRadiusTopLeft+'px '+canvasBorderRadiusTopRight+'px '+canvasBorderRadiusBottomRight+'px '+this.canvasBorderRadiusBottomLeft+'px', 'background-image': designCanvasTempBackgroundImage != null ? 'url(' + designCanvasTempBackgroundImage + ')' : 'none', 'background-position': designCanvasTempBackgroundImage != null ? ''+tempBackgroundXPos+'px '+tempBackgroundYPos+'px' : 'inital'}" (contextmenu)="open($event, $event); $event.preventDefault();" (paste)="onPaste($event)">
+      <div id="designCanvas" [style]="{'height': canvasPropertiesForm.controls['canvasHeight'].value+'px', 'background-color': canvasPropertiesForm.controls['canvasColor'].value, 'border-radius': canvasPropertiesForm.controls['canvasBorderRadiusTopLeft'].value+'px '+canvasPropertiesForm.controls['canvasBorderRadiusTopRight'].value+'px '+canvasPropertiesForm.controls['canvasBorderRadiusBottomRight'].value+'px '+canvasPropertiesForm.controls['canvasBorderRadiusBottomLeft'].value+'px', 'background-image': designCanvasTempBackgroundImage != null ? 'url(' + designCanvasTempBackgroundImage + ')' : 'none', 'background-position': designCanvasTempBackgroundImage != null ? ''+tempBackgroundXPos+'px '+tempBackgroundYPos+'px' : 'inital'}" (contextmenu)="open($event, $event); $event.preventDefault();" (paste)="onPaste($event)">
         <div (clickOutside)="onClickedOutside($event)">
           @for (item of designData; track item; let i = $index) {
-            <div class="itemContainer" [class]="{'active' : i == highlightedItem}" [style]="{'height': repeatDesign+'px'}">
+            <div class="itemContainer" [class]="{'active' : i == highlightedItem}" [style]="{'height': canvasPropertiesForm.controls['repeatDesign'].value+'px'}">
               <div class="itemInnerContainer" [class]="{'horizontalCenter' : item.horizontalPositioningStartingPoint === 'center', 'verticalCenter' : item.verticalPositioningStartingPoint === 'center'}">
                 <div class="item"
                 [ngStyle]="{
@@ -65,7 +65,7 @@
             </div>
           }
         </div>
-        <div id="repeatDesignMarker" [style]="{'top': repeatDesign+'px'}">Repeat Design</div>
+        <div id="repeatDesignMarker" [style]="{'top': canvasPropertiesForm.controls['repeatDesign'].value+'px'}">Repeat Design</div>
       </div>
     </div>
   </div>
@@ -303,7 +303,7 @@
 
   </form>
 
-
+  <form [formGroup]="canvasPropertiesForm">
   <ul>
 
 
@@ -321,19 +321,19 @@
     <div class="options">
       <div class="block" style="position: relative;">
         <label>Color</label>
-        <input class="colorToChoose" [(colorPicker)]="canvasColor" [style.background]="canvasColor" [cpPosition]="'bottom'" [cpWidth]="'200'" (colorPickerChange)="generate()" />
+        <input class="colorToChoose" [(colorPicker)]="canvasPropertiesForm.controls['canvasColor'].value" [style.background]="canvasPropertiesForm.controls['canvasColor'].value" [cpPosition]="'bottom'" [cpWidth]="'200'" (colorPickerChange)="generate()" />
       </div>
       <div class="block">
         <label>Height</label>
-        <input type="number" min="0" [(ngModel)]="canvasHeight" (change)="generate()" (keyup)="generate()" />
+        <input type="number" min="0" formControlName="canvasHeight" (change)="generate()" (keyup)="generate()" />
       </div>
       <div class="block">
         <label>Repeat Design</label>
-        <input type="number" min="0" [(ngModel)]="repeatDesign" (change)="generate()" (keyup)="generate()" />
+        <input type="number" min="0" formControlName="repeatDesign" (change)="generate()" (keyup)="generate()" />
       </div>
       <div class="block">
         <label>Z-Index</label>
-        <input type="number" min="1" [(ngModel)]="shapesZIndex" (change)="generate()" (keyup)="generate()" />
+        <input type="number" min="1" formControlName="shapesZIndex" (change)="generate()" (keyup)="generate()" />
       </div>
     </div>
   </li>
@@ -342,30 +342,30 @@
     <div class="options">
       <div class="block">
         <label>Top Left</label>
-        <input type="number" min="0" [(ngModel)]="canvasBorderRadiusTopLeft" (change)="generate()" (keyup)="generate()" />
+        <input type="number" min="0" formControlName="canvasBorderRadiusTopLeft" (change)="generate()" (keyup)="generate()" />
       </div>
       <div class="block">
         <label>Top Right</label>
-        <input type="number" min="0" [(ngModel)]="canvasBorderRadiusTopRight" (change)="generate()" (keyup)="generate()" />
+        <input type="number" min="0" formControlName="canvasBorderRadiusTopRight" (change)="generate()" (keyup)="generate()" />
       </div>
       <div class="block">
         <label>Bottom Right</label>
-        <input type="number" min="0" [(ngModel)]="canvasBorderRadiusBottomRight" (change)="generate()" (keyup)="generate()" />
+        <input type="number" min="0" formControlName="canvasBorderRadiusBottomRight" (change)="generate()" (keyup)="generate()" />
       </div>
       <div class="block">
         <label>Bottom Left</label>
-        <input type="number" min="0" [(ngModel)]="canvasBorderRadiusBottomLeft" (change)="generate()" (keyup)="generate()" />
+        <input type="number" min="0" formControlName="canvasBorderRadiusBottomLeft" (change)="generate()" (keyup)="generate()" />
       </div>
     </div>
   </li>
 
   <li class="multipleQuestions">
-    <div class="title">Shimmer <input type="checkbox" [(ngModel)]="showShimmer" (change)="generate()" /></div>
-    @if (showShimmer == true) {
+    <div class="title">Shimmer <input type="checkbox" formControlName="showShimmer" (change)="generate()" /></div>
+    @if (canvasPropertiesForm['controls']['showShimmer'].value == true) {
       <div class="options">
         <div class="block">
           <label>Type</label>
-          <select [(ngModel)]="shimmerType" (change)="changeCanvasColorBasedOnShimmerType();generate()">
+          <select formControlName="shimmerType" (change)="changeCanvasColorBasedOnShimmerType();generate()">
             <option [ngValue]="0">Affect shapes only</option>
             <option [ngValue]="1">Affect whole panel</option>
             <option [ngValue]="2">Fade in and out</option>
@@ -373,46 +373,46 @@
         </div>
         <div class="block">
           <label>Duration</label>
-          <input type="number" [(ngModel)]="playShimmerDuration" (change)="generate()" (keyup)="generate()" min="0.5" step="0.1" />
+          <input type="number" formControlName="playShimmerDuration" (change)="generate()" (keyup)="generate()" min="0.5" step="0.1" />
         </div>
       </div>
     }
   </li>
-  @if (showShimmer == true && shimmerType < 2) {
+  @if (canvasPropertiesForm['controls']['showShimmer'].value == true && canvasPropertiesForm['controls']['shimmerType'].value < 2) {
     <li class="multipleQuestions">
       <div class="title">Shimmer Angle Options</div>
         <div class="options">
           <div class="block">
             <label>Angle</label>
-            <input type="number" [(ngModel)]="shimmerAngle" (change)="generate()" (keyup)="generate()" min="1" step="1" />
+            <input type="number" formControlName="shimmerAngle" (change)="generate()" (keyup)="generate()" min="1" step="1" />
           </div>
           <div class="block">
-            <span class="angle-indicator" [ngStyle]="{'rotate': shimmerAngle+'deg'}"></span>
+            <span class="angle-indicator" [ngStyle]="{'rotate': canvasPropertiesForm['controls']['shimmerAngle'].value+'deg'}"></span>
           </div>
           <div class="block"></div>
           <div class="block"></div>
         </div>
     </li>
     }
-  @if (showShimmer == true && shimmerType < 2) {
+  @if (canvasPropertiesForm['controls']['showShimmer'].value == true && canvasPropertiesForm['controls']['shimmerType'].value < 2) {
   <li class="multipleQuestions">
     <div class="title">Shimmer Gradient Advanced Options</div>
       <div class="options">
         <div class="block" style="position: relative;">
           <label>Color</label>
-          <input class="colorToChoose" [(colorPicker)]="shimmerColor" [style.background]="shimmerColor" [cpOutputFormat]="'rgba'" [cpPosition]="'top-right'" [cpWidth]="'200'" (colorPickerChange)="generate()" />
+          <input class="colorToChoose" [(colorPicker)]="canvasPropertiesForm['controls']['shimmerColor'].value" [style.background]="canvasPropertiesForm['controls']['shimmerColor'].value" [cpOutputFormat]="'rgba'" [cpPosition]="'top-right'" [cpWidth]="'200'" (colorPickerChange)="generate()" />
         </div>
         <div class="block">
           <label>Width</label>
-          <input type="number" [(ngModel)]="shimmerWidth" (change)="generate()" (keyup)="generate()" min="1" step="1" />
+          <input type="number" formControlName="shimmerWidth" (change)="generate()" (keyup)="generate()" min="1" step="1" />
         </div>
         <div class="block">
           <label>Start</label>
-          <input type="number" [(ngModel)]="shimmerStartPosition" (change)="generate()" (keyup)="generate()" step="1" />
+          <input type="number" formControlName="shimmerStartPosition" (change)="generate()" (keyup)="generate()" step="1" />
         </div>
         <div class="block">
           <label>End</label>
-          <input type="number" [(ngModel)]="shimmerEndPosition" (change)="generate()" (keyup)="generate()" min="1" step="1" />
+          <input type="number" formControlName="shimmerEndPosition" (change)="generate()" (keyup)="generate()" min="1" step="1" />
         </div>
       </div>
   </li>
@@ -420,7 +420,7 @@
 
   
 </ul>
-
+</form>
 
 
 </div>
