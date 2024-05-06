@@ -873,6 +873,15 @@
           display: table-cell;
           width: 25%;
           padding-right: 10px;
+
+          span.angle-indicator{
+            display: block;
+            position: absolute;
+            height: 2px;
+            width: 40px;
+            background-color: #000;
+            margin-top: 2rem;
+          }
         }
   
         label {
