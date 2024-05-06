@@ -393,29 +393,41 @@
           <div class="block"></div>
         </div>
     </li>
-    }
-  @if (canvasPropertiesForm['controls']['showShimmer'].value == true && canvasPropertiesForm['controls']['shimmerType'].value < 2) {
-  <li class="multipleQuestions">
-    <div class="title">Shimmer Gradient Advanced Options</div>
-      <div class="options">
-        <div class="block" style="position: relative;">
-          <label>Color</label>
-          <input class="colorToChoose" [(colorPicker)]="canvasPropertiesForm['controls']['shimmerColor'].value" [style.background]="canvasPropertiesForm['controls']['shimmerColor'].value" [cpOutputFormat]="'rgba'" [cpPosition]="'top-right'" [cpWidth]="'200'" (colorPickerChange)="generate()" />
+    <li class="multipleQuestions">
+      <div class="title">Shimmer Gradient Advanced Options</div>
+        <div class="options">
+          <div class="block" style="position: relative;">
+            <label>Color</label>
+            <input class="colorToChoose" [(colorPicker)]="canvasPropertiesForm['controls']['shimmerColor'].value" [style.background]="canvasPropertiesForm['controls']['shimmerColor'].value" [cpOutputFormat]="'rgba'" [cpPosition]="'top-right'" [cpWidth]="'200'" (colorPickerChange)="generate()" />
+          </div>
+          <div class="block">
+            <label>Width</label>
+            <input type="number" formControlName="shimmerWidth" (change)="generate()" (keyup)="generate()" min="1" step="1" />
+          </div>
+          <div class="block">
+            <label>Start</label>
+            <input type="number" formControlName="shimmerStartPosition" (change)="generate()" (keyup)="generate()" step="1" />
+          </div>
+          <div class="block">
+            <label>End</label>
+            <input type="number" formControlName="shimmerEndPosition" (change)="generate()" (keyup)="generate()" min="1" step="1" />
+          </div>
         </div>
-        <div class="block">
-          <label>Width</label>
-          <input type="number" formControlName="shimmerWidth" (change)="generate()" (keyup)="generate()" min="1" step="1" />
+    </li>
+    <li class="multipleQuestions">
+      <div class="title">Shimmer Gradient Step Options <button type="button" (click)="addOpacityStep()">Add +</button></div>
+        <div class="options" formArrayName="opacitySteps">
+          <div class="block" *ngFor="let opacityStep of opacitySteps.controls; let i = index" [formGroupName]="i">
+            <label>Opacity</label>
+            <input type="number" formControlName="opacity" (change)="generate()" (keyup)="generate()" min="0" max="1" step="0.1" />
+            <hr />
+            <label>Step</label>
+            <input type="number" formControlName="step" (change)="generate()" (keyup)="generate()" min="0" max="100" step="1" />
+            <hr />
+            <button type="button" (click)="removeOpacityStep(i)">Remove</button>
+          </div>
         </div>
-        <div class="block">
-          <label>Start</label>
-          <input type="number" formControlName="shimmerStartPosition" (change)="generate()" (keyup)="generate()" step="1" />
-        </div>
-        <div class="block">
-          <label>End</label>
-          <input type="number" formControlName="shimmerEndPosition" (change)="generate()" (keyup)="generate()" min="1" step="1" />
-        </div>
-      </div>
-  </li>
+    </li>
   }
 
   

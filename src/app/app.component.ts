@@ -53,24 +53,25 @@ export class AppComponent implements OnInit {
 
   showModal: boolean = false;
 
-  shimmerGradientStages = [
-    {
-        "opacity": 0,
-        "step": 20
-    },
-    {
-        "opacity": 0.5,
-        "step": 50
-    },
-    {
-        "opacity": 0,
-        "step": 80
-    }
-  ]
-
 
   constructor(private generalService: GeneralService, private fb: FormBuilder, public overlay: Overlay, public viewContainerRef: ViewContainerRef) { }
 
+  get opacitySteps() {
+    return this.canvasPropertiesForm.get('opacitySteps') as FormArray;
+  }
+
+  addOpacityStep() {
+    this.opacitySteps.push(this.fb.group({
+      opacity: [0.5, Validators.required],
+      step: [50, Validators.required]
+    }));
+    this.generate();
+  }
+
+  removeOpacityStep(index: number) {
+    this.opacitySteps.removeAt(index);
+    this.generate();
+  }
   
   ngOnInit() {
 
@@ -90,8 +91,26 @@ export class AppComponent implements OnInit {
         shimmerColor: ["rgb(102,102,102)"],
         shimmerWidth: [90],
         shimmerStartPosition: [-20],
-        shimmerEndPosition: [120]
+        shimmerEndPosition: [120],
+        opacitySteps: this.fb.array([])
       });
+
+      this.opacitySteps.push(this.fb.group({
+        opacity: [0, Validators.required],
+        step: [20, Validators.required]
+      }));
+
+      this.opacitySteps.push(this.fb.group({
+        opacity: [0.5, Validators.required],
+        step: [50, Validators.required]
+      }));
+
+      this.opacitySteps.push(this.fb.group({
+        opacity: [0, Validators.required],
+        step: [80, Validators.required]
+      }));
+
+      /* */
 
       this.randomSkeletonName = this.generateRandomSkeletonName();
 
@@ -840,13 +859,13 @@ export class AppComponent implements OnInit {
                           this.generatedCss = this.generatedCss + "content: ' '; position: absolute; z-index: "+this.canvasPropertiesForm['controls']['shapesZIndex'].value+"; width: 100%; height: " + this.canvasPropertiesForm['controls']['canvasHeight'].value +"px;";
                           this.generatedCss = this.generatedCss + "-webkit-mask-image: linear-gradient( "+this.canvasPropertiesForm['controls']['shimmerAngle'].value+"deg, "; /* highlight */
                           
-                          this.shimmerGradientStages.forEach((x, index) => {
+                          this.opacitySteps.controls.forEach((control, index) => {
                 
                             // Since rectangles are only straight angles we can't do an antialias option anyway
-                            this.generatedCss = this.generatedCss + "rgba(255, 255, 255, "+x.opacity+") "+x.step+"%";
+                            this.generatedCss = this.generatedCss + "rgba(255, 255, 255, "+control.get('opacity')!.value+") "+control.get('step')!.value+"%";
             
                             /* Do a comma for the next one, or a semicolon for the last one START */
-                            if (index == this.shimmerGradientStages.length - 1) {
+                            if (index == this.opacitySteps.controls.length - 1) {
                                 this.generatedCss = this.generatedCss + "";
                             }
                             else
@@ -946,13 +965,13 @@ export class AppComponent implements OnInit {
               this.generatedCss = this.generatedCss + "height: " + this.canvasPropertiesForm['controls']['canvasHeight'].value +"px; background-color: " + this.canvasPropertiesForm['controls']['canvasColor'].value +"; border-radius: "+this.canvasPropertiesForm['controls']['canvasBorderRadiusTopLeft'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusTopRight'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusBottomRight'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusBottomLeft'].value+"px; ";
               this.generatedCss = this.generatedCss + "background-image: linear-gradient( "+this.canvasPropertiesForm['controls']['shimmerAngle'].value+"deg, "; /* highlight */
 
-              this.shimmerGradientStages.forEach((x, index) => {
+              this.opacitySteps.controls.forEach((control, index) => {
                 
                 // Since rectangles are only straight angles we can't do an antialias option anyway
-                this.generatedCss = this.generatedCss + "rgba("+amendedShimmerColor2+", "+x.opacity+") "+x.step+"%";
+                this.generatedCss = this.generatedCss + "rgba("+amendedShimmerColor2+", "+control.get('opacity')!.value+") "+control.get('step')!.value+"%";
 
                 /* Do a comma for the next one, or a semicolon for the last one START */
-                if (index == this.shimmerGradientStages.length - 1) {
+                if (index == this.opacitySteps.controls.length - 1) {
                     this.generatedCss = this.generatedCss + "";
                 }
                 else
