@@ -29,7 +29,7 @@ export class AppComponent implements OnInit {
   isFocused: boolean = false;
   public myForm!: FormGroup;
   public canvasPropertiesForm!: FormGroup;
-  newShapeColor: string = "#cccccc";
+  newShapeColor: string = "#F5F7F9";
   selectedTemplate: string = "";
   highlightedItem: number = -1;
   selectedType: string | null = "";
@@ -88,7 +88,7 @@ export class AppComponent implements OnInit {
         shimmerType: 0,
         playShimmerDuration: [2],
         shimmerAngle: [94],
-        shimmerColor: ["rgb(102,102,102)"],
+        shimmerColor: ["rgb(226,227,233)"],
         shimmerWidth: [90],
         shimmerStartPosition: [-20],
         shimmerEndPosition: [120],
@@ -101,7 +101,7 @@ export class AppComponent implements OnInit {
       }));
 
       this.opacitySteps.push(this.fb.group({
-        opacity: [0.5, Validators.required],
+        opacity: [1, Validators.required],
         step: [50, Validators.required]
       }));
 
