@@ -451,6 +451,12 @@
   
     .introText01{
       margin-left: 140px;
+      display: flex;
+      gap: 20px;
+
+      @media #{$mobileView} {
+        flex-direction: column;
+      }
     }
   
     .introText02{
@@ -501,7 +507,7 @@
     border-radius: $radius;
   }
   
-  
+
   
   .clear {
     clear: both;
