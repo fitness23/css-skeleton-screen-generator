@@ -1,0 +1,75 @@
+<div id="designView">
+  <div id="designViewInner">
+    <div class="paneLabel dark">Design View</div>
+    <div class="preMadeTemplateOptions">
+      <div class="premadeTemplates">
+        <label>Templates:</label>
+        <div class="optionContainer">
+          <div class="option" [class.active]="selectedTemplate === 'option1'" (click)="templateSelect.emit('option1')">blog</div>
+          <div class="option" [class.active]="selectedTemplate === 'option2'" (click)="templateSelect.emit('option2')">list</div>
+          <div class="option" [class.active]="selectedTemplate === 'option3'" (click)="templateSelect.emit('option3')">video</div>
+          <div class="option" [class.active]="selectedTemplate === 'option4'" (click)="templateSelect.emit('option4')">blank</div>
+        </div>
+        <div class="rightClickInstructions">Right click the canvas to add more shapes. Left click on existing shapes to edit them.</div>
+      </div>
+    </div>
+
+    <div class="tip">
+      <div class="tipHeader">
+        <div>Tips</div>
+        <button type="button" class="standardButton" (click)="toggleTips.emit()">{{ showTips ? 'Hide tips' : 'Show tips' }}</button>
+      </div>
+      @if (showTips && designCanvasTempBackgroundImage == null) {
+            <div>Paste your screen onto the canvas in order to properly line up the shapes. Take a print screen and paste using ctrl+v.</div>
+        }
+      
+        @if (showTips && designCanvasTempBackgroundImage != null) {
+            <div>Use the arrow keys to reposition the background.<br />Hit the delete key when you want to remove the background.</div>
+        }
+    </div>
+
+    @if (designData.length === 0) {
+      <div class="emptyState">
+        <div class="emptyTitle">Start with a template or add your first shape</div>
+        <div class="emptyBody">Choose a template above, or right click the canvas to add shapes. You can also paste a screenshot to align your layout.</div>
+        <div class="emptyStateActions">
+          <button type="button" class="standardButton" (click)="templateSelect.emit('option1')">Use blog template</button>
+          <button type="button" class="standardButton" (click)="templateSelect.emit('option2')">Use list template</button>
+        </div>
+      </div>
+    }
+
+    <div class="container">
+      <div id="designCanvas" [style]="{'height': canvasPropertiesForm.controls['canvasHeight'].value+'px', 'background-color': canvasPropertiesForm.controls['canvasColor'].value, 'border-radius': canvasPropertiesForm.controls['canvasBorderRadiusTopLeft'].value+'px '+canvasPropertiesForm.controls['canvasBorderRadiusTopRight'].value+'px '+canvasPropertiesForm.controls['canvasBorderRadiusBottomRight'].value+'px '+canvasPropertiesForm.controls['canvasBorderRadiusBottomLeft'].value+'px', 'background-image': designCanvasTempBackgroundImage != null ? 'url(' + designCanvasTempBackgroundImage + ')' : 'none', 'background-position': designCanvasTempBackgroundImage != null ? ''+tempBackgroundXPos+'px '+tempBackgroundYPos+'px' : 'initial'}" (contextmenu)="onContextMenu($event)" (paste)="paste.emit($event)">
+        <div (clickOutside)="clickedOutside.emit($event)">
+          @for (item of designData; track item; let i = $index) {
+            <div class="itemContainer" [class.active]="i === highlightedItem" [style]="{'height': canvasPropertiesForm.controls['repeatDesign'].value+'px'}">
+              <div class="itemInnerContainer" [class.horizontalCenter]="item.horizontalPositioningStartingPoint === 'center'" [class.verticalCenter]="item.verticalPositioningStartingPoint === 'center'">
+                <div class="item"
+                cdkDrag
+                cdkDragBoundary="#designCanvas"
+                (cdkDragEnded)="dragEnded.emit({ index: i, event: $event })"
+                [ngStyle]="{
+                  'background-color': item.color,
+                  'border-radius': item.type == 'circle' ? item.diameter+'px' : (item.borderRadiusTopLeft ?? 0)+'px '+(item.borderRadiusTopRight ?? 0)+'px '+(item.borderRadiusBottomRight ?? 0)+'px '+(item.borderRadiusBottomLeft ?? 0)+'px',
+                  'width': getItemWidth(item),
+                  'height': getItemHeight(item),
+                  'left': item.horizontalPositioningStartingPoint == 'left' ? item.horizontalPositioningAmount+item.horizontalPositioningUnit : (item.horizontalPositioningStartingPoint == 'center' ? getCenteredLeft(item) : 'auto'),
+                  'right': item.horizontalPositioningStartingPoint == 'right' ? item.horizontalPositioningAmount+item.horizontalPositioningUnit : 'auto',
+                  'margin-left': item.horizontalPositioningStartingPoint == 'center' ? getCenteredMarginLeft(item) : '0px',
+                  'top': item.verticalPositioningStartingPoint == 'top' ? item.verticalPositioningAmount+item.verticalPositioningUnit : (item.verticalPositioningStartingPoint == 'center' ? getCenteredTop(item) : 'auto'),
+                  'bottom': item.verticalPositioningStartingPoint == 'bottom' ? item.verticalPositioningAmount+item.verticalPositioningUnit : 'auto',
+                  'margin-top': item.verticalPositioningStartingPoint == 'center' ? getCenteredMarginTop(item) : '0px'
+                  }"
+                  (click)="itemClick.emit({ index: i, item })"
+                  >
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+        <div id="repeatDesignMarker" [style]="{'top': canvasPropertiesForm.controls['repeatDesign'].value+'px'}">Repeat Design</div>
+      </div>
+    </div>
+  </div>
+</div>

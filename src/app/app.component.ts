@@ -1,57 +1,81 @@
-import { Component, OnInit, ViewChild, TemplateRef, ViewContainerRef, HostListener } from '@angular/core';
-import { GeneralService } from "./shared/services/general.service";
-import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
-import {debounceTime} from 'rxjs/operators';
+import { CommonModule } from '@angular/common';
+import { Component, HostListener, OnInit, TemplateRef, ViewChild, ViewContainerRef, computed, signal } from '@angular/core';
+import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { filter, take, debounceTime } from 'rxjs/operators';
 import { fromEvent, Subscription } from 'rxjs';
 import { Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { take, filter } from 'rxjs/operators';
-import { RouterOutlet } from '@angular/router';
+import { DesignViewComponent } from './components/design-view/design-view.component';
+import { ResultCodeComponent } from './components/result-code/result-code.component';
+import { ResultViewComponent } from './components/result-view/result-view.component';
+import { ToolsPanelComponent } from './components/tools-panel/tools-panel.component';
 import { ShapeDetails, ShapeTemplate } from './shared/interfaces/shape-template-interface';
-import { ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { ColorPickerModule } from 'ngx-color-picker';
-import { DragDropModule } from '@angular/cdk/drag-drop';
-import {NgClickOutsideDirective} from 'ng-click-outside2';
-import { OverlayModule } from '@angular/cdk/overlay';
-import { CommonModule } from '@angular/common';
+import { GeneralService } from './shared/services/general.service';
+import { UserPreset } from './shared/interfaces/user-preset-interface';
+import { CdkDragEnd } from '@angular/cdk/drag-drop';
 
+interface HistoryState {
+  selectedTemplate: string;
+  newShapeColor: string;
+  designData: ShapeDetails[];
+  canvas: Record<string, any>;
+  designCanvasTempBackgroundImage: string | null;
+  tempBackgroundXPos: number;
+  tempBackgroundYPos: number;
+}
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, ReactiveFormsModule, FormsModule, ColorPickerModule, DragDropModule, NgClickOutsideDirective, OverlayModule, CommonModule],
+  imports: [CommonModule, DesignViewComponent, ToolsPanelComponent, ResultViewComponent, ResultCodeComponent],
   providers: [GeneralService],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
 export class AppComponent implements OnInit {
 
-  isFocused: boolean = false;
+  isFocused = signal(false);
   public myForm!: FormGroup;
   public canvasPropertiesForm!: FormGroup;
-  newShapeColor: string = "#F5F7F9";
-  selectedTemplate: string = "";
-  highlightedItem: number = -1;
-  selectedType: string | null = "";
-  randomSkeletonName: string = "";
-  generatedCss: string = "";
-  
-  designCanvasTempBackgroundImage: any;
-  tempBackgroundXPos: number = 100;
-  tempBackgroundYPos: number = 100;
+  newShapeColor = signal("#F5F7F9");
+  selectedTemplate = signal("");
+  highlightedItem = signal(-1);
+  randomSkeletonName = "";
+  generatedCss = signal("");
 
-  designData: ShapeDetails[] = [];
+  designCanvasTempBackgroundImage = signal<string | null>(null);
+  tempBackgroundXPos = signal(100);
+  tempBackgroundYPos = signal(100);
+
+  designData = signal<ShapeDetails[]>([]);
+  selectedType = computed<'rectangle' | 'circle' | null>(() => {
+    const index = this.highlightedItem();
+    const data = this.designData();
+    if (index < 0 || index >= data.length) {
+      return null;
+    }
+    return data[index].type;
+  });
 
   option1: ShapeTemplate = this.generalService.presetOption1();
   option2: ShapeTemplate = this.generalService.presetOption2();
   option3: ShapeTemplate = this.generalService.presetOption3();
   option4: ShapeTemplate = this.generalService.presetOption4();
-  
-  sub!: Subscription;
-  overlayRef!: OverlayRef | null;
+
+  sub?: Subscription;
+  overlayRef: OverlayRef | null = null;
   @ViewChild('userMenu') userMenu!: TemplateRef<any>;
 
-  showModal: boolean = false;
+  showModal = signal(false);
+  showTips = signal(true);
+  userPresets = signal<UserPreset[]>([]);
+  presetName = signal("");
+  showAdvancedControls = signal(false);
+  showGuide = signal(false);
+  history = signal<HistoryState[]>([]);
+  historyIndex = signal(-1);
+  private isApplyingHistory = false;
+  private lastHistorySnapshot = "";
 
 
   constructor(private generalService: GeneralService, private fb: FormBuilder, public overlay: Overlay, public viewContainerRef: ViewContainerRef) { }
@@ -130,6 +154,10 @@ export class AppComponent implements OnInit {
           diameterCalc: [null],
           diameterCalcAmount: [null],
           diameterCalcUnit: [null],
+          borderRadiusTopLeft: [0],
+          borderRadiusTopRight: [0],
+          borderRadiusBottomRight: [0],
+          borderRadiusBottomLeft: [0],
           color: [null],
           horizontalPositioningStartingPoint: [null],
           horizontalPositioningAmount: [null],
@@ -145,6 +173,8 @@ export class AppComponent implements OnInit {
           this.sendValuesBackToArray()
       );
 
+      this.loadPresetsFromStorage();
+      this.loadGuideStateFromStorage();
       this.createTemplate('option1');
 
       
@@ -158,21 +188,376 @@ export class AppComponent implements OnInit {
 
 
   onFocus() {
-    this.isFocused = true;
+    this.isFocused.set(true);
   }
 
   onBlur() {
-    this.isFocused = false;
+    this.isFocused.set(false);
   }
 
 
   closeModal(){
-    this.showModal = false;
+    this.showModal.set(false);
   }
 
   deleteBackgroundImage(){
     this.closeModal();
-    this.designCanvasTempBackgroundImage = null;
+    this.designCanvasTempBackgroundImage.set(null);
+  }
+
+  onShapeDragEnd(index: number, event: CdkDragEnd): void {
+    const canvas = document.getElementById('designCanvas');
+    const element = event.source.getRootElement();
+    if (!canvas || !element) {
+      return;
+    }
+
+    const canvasRect = canvas.getBoundingClientRect();
+    const elementRect = element.getBoundingClientRect();
+    const left = Math.round(elementRect.left - canvasRect.left);
+    const top = Math.round(elementRect.top - canvasRect.top);
+    const right = Math.round(canvasRect.right - elementRect.right);
+    const bottom = Math.round(canvasRect.bottom - elementRect.bottom);
+    const centerXOffset = Math.round(
+      (elementRect.left + elementRect.width / 2) - (canvasRect.left + canvasRect.width / 2)
+    );
+    const centerYOffset = Math.round(
+      (elementRect.top + elementRect.height / 2) - (canvasRect.top + canvasRect.height / 2)
+    );
+
+    const data = [...this.designData()];
+    const target = data[index];
+    if (!target) {
+      return;
+    }
+
+    const resolveUnitAmount = (unit: string | null, pxValue: number, axisSize: number) => {
+      if (unit === '%' && axisSize > 0) {
+        return parseFloat(((pxValue / axisSize) * 100).toFixed(2));
+      }
+      return pxValue;
+    };
+
+    switch (target.horizontalPositioningStartingPoint) {
+      case 'right': {
+        const amount = resolveUnitAmount(target.horizontalPositioningUnit, right, canvasRect.width);
+        target.horizontalPositioningAmount = amount;
+        target.horizontalPositioningUnit = target.horizontalPositioningUnit ?? 'px';
+        break;
+      }
+      case 'center': {
+        target.horizontalPositioningStartingPoint = 'left';
+        target.horizontalPositioningAmount = left;
+        target.horizontalPositioningUnit = 'px';
+        break;
+      }
+      default: {
+        const amount = resolveUnitAmount(target.horizontalPositioningUnit, left, canvasRect.width);
+        target.horizontalPositioningAmount = amount;
+        target.horizontalPositioningUnit = target.horizontalPositioningUnit ?? 'px';
+        target.horizontalPositioningStartingPoint = 'left';
+        break;
+      }
+    }
+
+    switch (target.verticalPositioningStartingPoint) {
+      case 'bottom': {
+        const amount = resolveUnitAmount(target.verticalPositioningUnit, bottom, canvasRect.height);
+        target.verticalPositioningAmount = amount;
+        target.verticalPositioningUnit = target.verticalPositioningUnit ?? 'px';
+        break;
+      }
+      case 'center': {
+        target.verticalPositioningStartingPoint = 'top';
+        target.verticalPositioningAmount = top;
+        target.verticalPositioningUnit = 'px';
+        break;
+      }
+      default: {
+        const amount = resolveUnitAmount(target.verticalPositioningUnit, top, canvasRect.height);
+        target.verticalPositioningAmount = amount;
+        target.verticalPositioningUnit = target.verticalPositioningUnit ?? 'px';
+        target.verticalPositioningStartingPoint = 'top';
+        break;
+      }
+    }
+
+    this.designData.set(data);
+    event.source.reset();
+
+    if (this.highlightedItem() === index) {
+      this.myForm.controls['horizontalPositioningStartingPoint'].patchValue(target.horizontalPositioningStartingPoint);
+      this.myForm.controls['horizontalPositioningAmount'].patchValue(target.horizontalPositioningAmount);
+      this.myForm.controls['horizontalPositioningUnit'].patchValue(target.horizontalPositioningUnit);
+      this.myForm.controls['verticalPositioningStartingPoint'].patchValue(target.verticalPositioningStartingPoint);
+      this.myForm.controls['verticalPositioningAmount'].patchValue(target.verticalPositioningAmount);
+      this.myForm.controls['verticalPositioningUnit'].patchValue(target.verticalPositioningUnit);
+    }
+
+    this.generate();
+  }
+
+  undo(): void {
+    const index = this.historyIndex();
+    if (index <= 0) {
+      return;
+    }
+    this.applyHistoryState(this.history()[index - 1]);
+    this.historyIndex.set(index - 1);
+  }
+
+  redo(): void {
+    const index = this.historyIndex();
+    const items = this.history();
+    if (index >= items.length - 1) {
+      return;
+    }
+    this.applyHistoryState(items[index + 1]);
+    this.historyIndex.set(index + 1);
+  }
+
+  canUndo(): boolean {
+    return this.historyIndex() > 0;
+  }
+
+  canRedo(): boolean {
+    return this.historyIndex() >= 0 && this.historyIndex() < this.history().length - 1;
+  }
+
+  private loadPresetsFromStorage(): void {
+    try {
+      const raw = window.localStorage.getItem('css-skeleton-presets');
+      if (!raw) {
+        return;
+      }
+      const parsed = JSON.parse(raw) as UserPreset[];
+      if (Array.isArray(parsed)) {
+        this.userPresets.set(parsed);
+      }
+    } catch {
+      this.userPresets.set([]);
+    }
+  }
+
+  private loadGuideStateFromStorage(): void {
+    try {
+      const dismissed = window.localStorage.getItem('css-skeleton-guide-dismissed');
+      this.showGuide.set(dismissed !== 'true');
+    } catch {
+      this.showGuide.set(true);
+    }
+  }
+
+  dismissGuide(): void {
+    this.showGuide.set(false);
+    try {
+      window.localStorage.setItem('css-skeleton-guide-dismissed', 'true');
+    } catch {
+      // Ignore storage failures.
+    }
+  }
+
+  private persistPresets(presets: UserPreset[]): void {
+    try {
+      window.localStorage.setItem('css-skeleton-presets', JSON.stringify(presets));
+    } catch {
+      // Ignore storage failures.
+    }
+  }
+
+  private createPresetId(): string {
+    if (window.crypto && 'randomUUID' in window.crypto) {
+      return window.crypto.randomUUID();
+    }
+    return `preset_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+  }
+
+  private normalizePreset(raw: any): UserPreset | null {
+    if (!raw || typeof raw !== 'object') {
+      return null;
+    }
+    const name = typeof raw.name === 'string' ? raw.name : '';
+    const template = typeof raw.template === 'string' ? raw.template : 'custom';
+    const newShapeColor = typeof raw.newShapeColor === 'string' ? raw.newShapeColor : '#F5F7F9';
+    const shapes = Array.isArray(raw.shapes) ? raw.shapes : [];
+    const canvas = typeof raw.canvas === 'object' && raw.canvas ? raw.canvas : {};
+
+    return {
+      id: typeof raw.id === 'string' ? raw.id : this.createPresetId(),
+      name: name || `Preset ${new Date().toLocaleDateString()}`,
+      createdAt: typeof raw.createdAt === 'number' ? raw.createdAt : Date.now(),
+      template,
+      newShapeColor,
+      canvas,
+      shapes
+    };
+  }
+
+  private setOpacitySteps(steps: { opacity: number; step: number }[]): void {
+    const array = this.opacitySteps;
+    while (array.length > 0) {
+      array.removeAt(0);
+    }
+    steps.forEach((step) => {
+      array.push(this.fb.group({
+        opacity: [step.opacity, Validators.required],
+        step: [step.step, Validators.required]
+      }));
+    });
+  }
+
+  private recordHistory(): void {
+    if (this.isApplyingHistory) {
+      return;
+    }
+    const snapshot = this.buildHistorySnapshot();
+    if (snapshot.serialized === this.lastHistorySnapshot) {
+      return;
+    }
+    this.lastHistorySnapshot = snapshot.serialized;
+
+    const items = this.history();
+    const index = this.historyIndex();
+    const next = index < items.length - 1 ? items.slice(0, index + 1) : items;
+    next.push(snapshot.state);
+    const capped = next.length > 50 ? next.slice(next.length - 50) : next;
+    this.history.set(capped);
+    this.historyIndex.set(capped.length - 1);
+  }
+
+  private buildHistorySnapshot(): { serialized: string; state: HistoryState } {
+    const state: HistoryState = {
+      selectedTemplate: this.selectedTemplate(),
+      newShapeColor: this.newShapeColor(),
+      designData: structuredClone(this.designData()),
+      canvas: this.canvasPropertiesForm.getRawValue(),
+      designCanvasTempBackgroundImage: this.designCanvasTempBackgroundImage(),
+      tempBackgroundXPos: this.tempBackgroundXPos(),
+      tempBackgroundYPos: this.tempBackgroundYPos()
+    };
+    return { serialized: JSON.stringify(state), state };
+  }
+
+  private applyHistoryState(state: HistoryState): void {
+    this.isApplyingHistory = true;
+    this.selectedTemplate.set(state.selectedTemplate);
+    this.newShapeColor.set(state.newShapeColor);
+    this.designData.set(structuredClone(state.designData));
+    this.designCanvasTempBackgroundImage.set(state.designCanvasTempBackgroundImage);
+    this.tempBackgroundXPos.set(state.tempBackgroundXPos);
+    this.tempBackgroundYPos.set(state.tempBackgroundYPos);
+    this.canvasPropertiesForm.patchValue(state.canvas);
+    this.setOpacitySteps(state.canvas['opacitySteps'] ?? []);
+    this.highlightedItem.set(-1);
+    this.generate();
+    this.isApplyingHistory = false;
+  }
+
+  updatePresetName(name: string): void {
+    this.presetName.set(name);
+  }
+
+  savePreset(): void {
+    const name = this.presetName().trim();
+    if (!name) {
+      return;
+    }
+
+    const preset: UserPreset = {
+      id: this.createPresetId(),
+      name,
+      createdAt: Date.now(),
+      template: this.selectedTemplate(),
+      newShapeColor: this.newShapeColor(),
+      canvas: this.canvasPropertiesForm.getRawValue(),
+      shapes: structuredClone(this.designData())
+    };
+
+    const updated = [preset, ...this.userPresets()];
+    this.userPresets.set(updated);
+    this.persistPresets(updated);
+    this.presetName.set("");
+  }
+
+  loadPreset(id: string): void {
+    const preset = this.userPresets().find((item) => item.id === id);
+    if (!preset) {
+      return;
+    }
+
+    this.selectedTemplate.set(preset.template || 'custom');
+    this.newShapeColor.set(preset.newShapeColor);
+    this.designData.set(structuredClone(preset.shapes));
+    this.highlightedItem.set(-1);
+
+    this.canvasPropertiesForm.patchValue(preset.canvas);
+    this.setOpacitySteps(preset.canvas['opacitySteps'] ?? []);
+
+    this.generate();
+  }
+
+  deletePreset(id: string): void {
+    const updated = this.userPresets().filter((preset) => preset.id !== id);
+    this.userPresets.set(updated);
+    this.persistPresets(updated);
+  }
+
+  exportPresets(): void {
+    const data = JSON.stringify(this.userPresets(), null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `css-skeleton-presets-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  importPresets(file?: File): void {
+    if (!file) {
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const raw = reader.result;
+        if (typeof raw !== 'string') {
+          return;
+        }
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) {
+          return;
+        }
+        const normalized = parsed
+          .map((item) => this.normalizePreset(item))
+          .filter((item): item is UserPreset => item != null);
+
+        if (normalized.length === 0) {
+          return;
+        }
+
+        const existing = this.userPresets();
+        const existingIds = new Set(existing.map((preset) => preset.id));
+        const merged = [...existing];
+        normalized.forEach((preset) => {
+          if (existingIds.has(preset.id)) {
+            merged.push({
+              ...preset,
+              id: this.createPresetId()
+            });
+          } else {
+            merged.push(preset);
+          }
+        });
+        this.userPresets.set(merged);
+        this.persistPresets(merged);
+      } catch {
+        // ignore malformed import
+      }
+    };
+    reader.readAsText(file);
   }
 
 
@@ -192,13 +577,13 @@ export class AppComponent implements OnInit {
           {
               event.preventDefault(); //Prevent the window from scrolling
 
-              if ((this.highlightedItem != -1))
+              if ((this.highlightedItem() != -1))
               {
                   this.myForm.controls['horizontalPositioningAmount'].patchValue(this.myForm.controls['horizontalPositioningAmount'].value-1);
               }
               else
               {
-                  this.tempBackgroundXPos--;
+                  this.tempBackgroundXPos.update((value) => value - 1);
               }
           }
 
@@ -206,13 +591,13 @@ export class AppComponent implements OnInit {
           {
               event.preventDefault(); //Prevent the window from scrolling
 
-              if ((this.highlightedItem != -1))
+              if ((this.highlightedItem() != -1))
               {
                   this.myForm.controls['horizontalPositioningAmount'].patchValue(this.myForm.controls['horizontalPositioningAmount'].value+1);
               }
               else
               {
-                  this.tempBackgroundXPos++;
+                  this.tempBackgroundXPos.update((value) => value + 1);
               }
           }
 
@@ -220,13 +605,13 @@ export class AppComponent implements OnInit {
           {
               event.preventDefault(); //Prevent the window from scrolling
 
-              if ((this.highlightedItem != -1))
+              if ((this.highlightedItem() != -1))
               {
                   this.myForm.controls['verticalPositioningAmount'].patchValue(this.myForm.controls['verticalPositioningAmount'].value-1);
               }
               else
               {
-                  this.tempBackgroundYPos--;
+                  this.tempBackgroundYPos.update((value) => value - 1);
               }
           }
 
@@ -234,30 +619,30 @@ export class AppComponent implements OnInit {
           {
               event.preventDefault(); //Prevent the window from scrolling
 
-              if ((this.highlightedItem != -1))
+              if ((this.highlightedItem() != -1))
               {
                   this.myForm.controls['verticalPositioningAmount'].patchValue(this.myForm.controls['verticalPositioningAmount'].value+1);
               }
               else
               {
-                  this.tempBackgroundYPos++;
+                  this.tempBackgroundYPos.update((value) => value + 1);
               }
           }
       
 
       if ((event.key === 'Delete'))
       {
-          if ((this.highlightedItem != -1))
+          if ((this.highlightedItem() != -1))
           {
               // Only delete if we are NOT editing an item
-              if ((this.isFocused === false)){
-                this.deleteItem(this.highlightedItem);
+              if ((this.isFocused() === false)){
+                this.deleteItem(this.highlightedItem());
               }
           }
           else{
             // Only show the modal if there is a background image to start with
-            if ((this.designCanvasTempBackgroundImage != null)){
-                this.showModal = true;
+            if ((this.designCanvasTempBackgroundImage() != null)){
+                this.showModal.set(true);
             }
           }
       }
@@ -286,13 +671,11 @@ export class AppComponent implements OnInit {
 
 
   onClickedOutside(e: any) {
-      console.log(e);
-
       // Drop the item focus unless they are clicking within the item specific details div
       var element = document.getElementById('itemSpecificDetails');
-      if (e.target !== element && !element!.contains(e.target))
+      if (element && e.target !== element && !element.contains(e.target))
       {
-          this.highlightedItem = -1;
+          this.highlightedItem.set(-1);
       }
       
     }
@@ -300,9 +683,6 @@ export class AppComponent implements OnInit {
 
 
     open({ x, y }: MouseEvent, clickEvent: MouseEvent) {
-
-      console.log(clickEvent);
-        
       this.close();
   const positionStrategy = this.overlay.position()
     .flexibleConnectedTo({ x, y })
@@ -351,32 +731,29 @@ export class AppComponent implements OnInit {
 
   createTemplate(option: string)
   {
-      this.selectedTemplate = option;
+      this.selectedTemplate.set(option);
 
-      this.highlightedItem = -1;
-      this.selectedType = null;
+      this.highlightedItem.set(-1);
 
-      this.designData = [];
+      this.designData.set([]);
 
       if ((option === "option1")){
-        this.designData = this['option1'].shapes;
+        this.designData.set(this['option1'].shapes);
         this.canvasPropertiesForm.controls['canvasHeight'].patchValue(this['option1'].canvasHeight);
         this.canvasPropertiesForm.controls['repeatDesign'].patchValue(this['option1'].repeatDesign);
       }
 
       if ((option === "option2")){
-        this.designData = this['option2'].shapes;
+        this.designData.set(this['option2'].shapes);
         this.canvasPropertiesForm.controls['canvasHeight'].patchValue(this['option2'].canvasHeight);
         this.canvasPropertiesForm.controls['repeatDesign'].patchValue(this['option2'].repeatDesign);
       }
 
       if ((option === "option3")){
-        this.designData = this['option3'].shapes;
+        this.designData.set(this['option3'].shapes);
         this.canvasPropertiesForm.controls['canvasHeight'].patchValue(this['option3'].canvasHeight);
         this.canvasPropertiesForm.controls['repeatDesign'].patchValue(this['option3'].repeatDesign);
       }
-
-
 
       this.generate();
   }
@@ -385,36 +762,49 @@ export class AppComponent implements OnInit {
 
   sendValuesBackToArray() {
 
-      this.designData[this.highlightedItem].width = this.myForm.value.width;
-      this.designData[this.highlightedItem].widthMeasurement = this.myForm.value.widthMeasurement;
-      this.designData[this.highlightedItem].widthCalc = this.myForm.value.widthCalc;
-      this.designData[this.highlightedItem].widthCalcAmount = this.myForm.value.widthCalcAmount;
-      this.designData[this.highlightedItem].widthCalcUnit = this.myForm.value.widthCalcUnit;
+      const currentIndex = this.highlightedItem();
+      if (currentIndex < 0) {
+          return;
+      }
 
-      this.designData[this.highlightedItem].height = this.myForm.value.height;
-      this.designData[this.highlightedItem].heightMeasurement = this.myForm.value.heightMeasurement;
-      this.designData[this.highlightedItem].heightCalc = this.myForm.value.heightCalc;
-      this.designData[this.highlightedItem].heightCalcAmount = this.myForm.value.heightCalcAmount;
-      this.designData[this.highlightedItem].heightCalcUnit = this.myForm.value.heightCalcUnit;
+      const data = [...this.designData()];
 
-      this.designData[this.highlightedItem].diameter = this.myForm.value.diameter;
-      this.designData[this.highlightedItem].diameterMeasurement = this.myForm.value.diameterMeasurement;
-      this.designData[this.highlightedItem].diameterCalc = this.myForm.value.diameterCalc;
-      this.designData[this.highlightedItem].diameterCalcAmount = this.myForm.value.diameterCalcAmount;
-      this.designData[this.highlightedItem].diameterCalcUnit = this.myForm.value.diameterCalcUnit;
+      data[currentIndex].width = this.myForm.value.width;
+      data[currentIndex].widthMeasurement = this.myForm.value.widthMeasurement;
+      data[currentIndex].widthCalc = this.myForm.value.widthCalc;
+      data[currentIndex].widthCalcAmount = this.myForm.value.widthCalcAmount;
+      data[currentIndex].widthCalcUnit = this.myForm.value.widthCalcUnit;
 
-      this.designData[this.highlightedItem].color = this.myForm.value.color;
+      data[currentIndex].height = this.myForm.value.height;
+      data[currentIndex].heightMeasurement = this.myForm.value.heightMeasurement;
+      data[currentIndex].heightCalc = this.myForm.value.heightCalc;
+      data[currentIndex].heightCalcAmount = this.myForm.value.heightCalcAmount;
+      data[currentIndex].heightCalcUnit = this.myForm.value.heightCalcUnit;
 
-      this.designData[this.highlightedItem].horizontalPositioningStartingPoint = this.myForm.value.horizontalPositioningStartingPoint;
-      this.designData[this.highlightedItem].horizontalPositioningAmount = this.myForm.value.horizontalPositioningAmount;
-      this.designData[this.highlightedItem].horizontalPositioningUnit = this.myForm.value.horizontalPositioningUnit;
+      data[currentIndex].diameter = this.myForm.value.diameter;
+      data[currentIndex].diameterMeasurement = this.myForm.value.diameterMeasurement;
+      data[currentIndex].diameterCalc = this.myForm.value.diameterCalc;
+      data[currentIndex].diameterCalcAmount = this.myForm.value.diameterCalcAmount;
+      data[currentIndex].diameterCalcUnit = this.myForm.value.diameterCalcUnit;
+      data[currentIndex].borderRadiusTopLeft = this.myForm.value.borderRadiusTopLeft ?? 0;
+      data[currentIndex].borderRadiusTopRight = this.myForm.value.borderRadiusTopRight ?? 0;
+      data[currentIndex].borderRadiusBottomRight = this.myForm.value.borderRadiusBottomRight ?? 0;
+      data[currentIndex].borderRadiusBottomLeft = this.myForm.value.borderRadiusBottomLeft ?? 0;
 
-      this.designData[this.highlightedItem].verticalPositioningStartingPoint = this.myForm.value.verticalPositioningStartingPoint;
-      this.designData[this.highlightedItem].verticalPositioningAmount = this.myForm.value.verticalPositioningAmount;
-      this.designData[this.highlightedItem].verticalPositioningUnit = this.myForm.value.verticalPositioningUnit;
+      data[currentIndex].color = this.myForm.value.color;
 
-      this.designData[this.highlightedItem].allowShimmerOverlay = this.myForm.value.allowShimmerOverlay;
-      this.designData[this.highlightedItem].antialias = this.myForm.value.antialias;
+      data[currentIndex].horizontalPositioningStartingPoint = this.myForm.value.horizontalPositioningStartingPoint;
+      data[currentIndex].horizontalPositioningAmount = this.myForm.value.horizontalPositioningAmount;
+      data[currentIndex].horizontalPositioningUnit = this.myForm.value.horizontalPositioningUnit;
+
+      data[currentIndex].verticalPositioningStartingPoint = this.myForm.value.verticalPositioningStartingPoint;
+      data[currentIndex].verticalPositioningAmount = this.myForm.value.verticalPositioningAmount;
+      data[currentIndex].verticalPositioningUnit = this.myForm.value.verticalPositioningUnit;
+
+      data[currentIndex].allowShimmerOverlay = this.myForm.value.allowShimmerOverlay;
+      data[currentIndex].antialias = this.myForm.value.antialias;
+
+      this.designData.set(data);
 
       this.generate();
   }
@@ -539,7 +929,6 @@ export class AppComponent implements OnInit {
   syncHeight()
   {
       this.myForm.controls['height'].patchValue(this.myForm.value.width);
-      console.log(this.myForm);
       //this.sendValuesBackToArray();
   }
 
@@ -578,7 +967,7 @@ export class AppComponent implements OnInit {
         result = `calc(${record.width}${record.widthMeasurement} ${record.widthCalc} ${record.widthCalcAmount})`;
       }
 
-      return result;
+      return result ?? "";
   }
 
   determineRectangleHeightDesignView(record: ShapeDetails){
@@ -611,7 +1000,7 @@ export class AppComponent implements OnInit {
           toWrite = `calc(${startingNumber}px ${record.heightCalc} ${record.heightCalcAmount})`;
       }
 
-      return toWrite;
+      return toWrite ?? `${startingNumber}px`;
       
   }
 
@@ -640,564 +1029,342 @@ export class AppComponent implements OnInit {
 
   determineHorizontalPositioningOfShape(record: ShapeDetails){
       if ((record.horizontalPositioningStartingPoint === "center")){
-          return `${record.horizontalPositioningStartingPoint}`;
+          const unit = record.horizontalPositioningUnit ?? "px";
+          const amount = Math.abs(record.horizontalPositioningAmount);
+          const operator = record.horizontalPositioningAmount >= 0 ? "+" : "-";
+          if (record.horizontalPositioningAmount == null || record.horizontalPositioningAmount === 0) {
+              return `left 50%`;
+          }
+          return `left calc(50% ${operator} ${amount}${unit})`;
       }
-      else{
-          return `${record.horizontalPositioningStartingPoint} ${record.horizontalPositioningAmount}${record.horizontalPositioningUnit}`;
-      }
+      return `${record.horizontalPositioningStartingPoint} ${record.horizontalPositioningAmount}${record.horizontalPositioningUnit}`;
   }
 
   determineVerticalPositioningOfShape(record: ShapeDetails){
       if ((record.verticalPositioningStartingPoint === "center")){
-          return `${record.verticalPositioningStartingPoint}`;
+          const unit = record.verticalPositioningUnit ?? "px";
+          const amount = Math.abs(record.verticalPositioningAmount);
+          const operator = record.verticalPositioningAmount >= 0 ? "+" : "-";
+          if (record.verticalPositioningAmount == null || record.verticalPositioningAmount === 0) {
+              return `top 50%`;
+          }
+          return `top calc(50% ${operator} ${amount}${unit})`;
       }
-      else{
-          return `${record.verticalPositioningStartingPoint} ${record.verticalPositioningAmount}${record.verticalPositioningUnit}`;
+      return `${record.verticalPositioningStartingPoint} ${record.verticalPositioningAmount}${record.verticalPositioningUnit}`;
+  }
+
+  private getDesignDataReversed(): ShapeDetails[] {
+      return [...this.designData()].reverse();
+  }
+
+  private removeGeneratedStyle(): void {
+      const existing = document.getElementById("andrew");
+      if (existing) {
+          existing.remove();
       }
+  }
+
+  private buildBaseDeclarations(includePosition: boolean): string {
+      const controls = this.canvasPropertiesForm.controls;
+      const parts: string[] = [];
+      if (includePosition) {
+          parts.push("position: relative;");
+      }
+      parts.push(`height: ${controls['canvasHeight'].value}px;`);
+      parts.push(`background-color: ${controls['canvasColor'].value};`);
+      parts.push(`border-radius: ${controls['canvasBorderRadiusTopLeft'].value}px ${controls['canvasBorderRadiusTopRight'].value}px ${controls['canvasBorderRadiusBottomRight'].value}px ${controls['canvasBorderRadiusBottomLeft'].value}px;`);
+      return parts.join(" ");
+  }
+
+  private getRectangleRadii(shape: ShapeDetails) {
+      return {
+          topLeft: Math.max(0, shape.borderRadiusTopLeft ?? 0),
+          topRight: Math.max(0, shape.borderRadiusTopRight ?? 0),
+          bottomRight: Math.max(0, shape.borderRadiusBottomRight ?? 0),
+          bottomLeft: Math.max(0, shape.borderRadiusBottomLeft ?? 0)
+      };
+  }
+
+  private buildHorizontalPositionWithOffset(shape: ShapeDetails, offsetPx: number): string {
+      const amount = shape.horizontalPositioningAmount ?? 0;
+      const unit = shape.horizontalPositioningUnit ?? "px";
+      const start = shape.horizontalPositioningStartingPoint;
+
+      if (start === "center") {
+          const amountSign = amount >= 0 ? "+" : "-";
+          const amountAbs = Math.abs(amount);
+          if (offsetPx === 0) {
+              if (amountAbs === 0) {
+                  return "left 50%";
+              }
+              return `left calc(50% ${amountSign} ${amountAbs}${unit})`;
+          }
+          const offsetSign = offsetPx >= 0 ? "+" : "-";
+          const offsetAbs = Math.abs(offsetPx);
+          if (amountAbs === 0) {
+              return `left calc(50% ${offsetSign} ${offsetAbs}px)`;
+          }
+          return `left calc(50% ${amountSign} ${amountAbs}${unit} ${offsetSign} ${offsetAbs}px)`;
+      }
+
+      const keyword = start === "right" ? "right" : "left";
+      if (offsetPx === 0) {
+          return `${keyword} ${amount}${unit}`;
+      }
+      return `${keyword} calc(${amount}${unit} + ${offsetPx}px)`;
+  }
+
+  private buildShapeLayers(shapes: ShapeDetails[], colorOverride?: string): Array<{ gradient: string; size: string; position: string }> {
+      const controls = this.canvasPropertiesForm.controls;
+      const repeatDesign = controls['repeatDesign'].value;
+      const layers: Array<{ gradient: string; size: string; position: string }> = [];
+
+      shapes.forEach((shape) => {
+          const color = colorOverride ?? shape.color;
+          const basePosition = `${this.determineHorizontalPositioningOfShape(shape)} ${this.determineVerticalPositioningOfShape(shape)}`;
+
+          if (shape.type === "circle") {
+              const radius = (shape.diameter ?? 0) / 2;
+              const gradient = shape.antialias === false
+                  ? `radial-gradient( circle ${radius}px at ${radius}px ${radius}px, ${color} 99%, transparent 0 )`
+                  : `radial-gradient( circle ${radius}px at ${radius}px ${radius}px, ${color} ${radius - 1}px, transparent ${radius}px )`;
+              layers.push({
+                  gradient,
+                  size: `${shape.diameter}${shape.diameterMeasurement} ${repeatDesign}px`,
+                  position: basePosition
+              });
+              return;
+          }
+
+          const width = this.determineRectangleWidth(shape);
+          const height = this.determineRectangleHeightResultView(shape);
+          const baseSize = `${width} ${repeatDesign}px`;
+          const radii = this.getRectangleRadii(shape);
+          const hasRadius = Object.values(radii).some((value) => value > 0);
+
+          if (!hasRadius) {
+              layers.push({
+                  gradient: `linear-gradient( ${color} ${height}, transparent 0 )`,
+                  size: baseSize,
+                  position: basePosition
+              });
+              return;
+          }
+
+          const leftInset = Math.max(radii.topLeft, radii.bottomLeft);
+          const rightInset = Math.max(radii.topRight, radii.bottomRight);
+          const joinOverlap = 1;
+          const leftInsetJoin = Math.max(leftInset - joinOverlap, 0);
+          const rightInsetJoin = Math.max(rightInset - joinOverlap, 0);
+          const topLeftJoin = Math.max(radii.topLeft - joinOverlap, 0);
+          const topRightJoin = Math.max(radii.topRight - joinOverlap, 0);
+          const bottomLeftJoin = Math.max(radii.bottomLeft - joinOverlap, 0);
+          const bottomRightJoin = Math.max(radii.bottomRight - joinOverlap, 0);
+          const topInsetJoin = Math.max(topLeftJoin, topRightJoin);
+          const bottomInsetJoin = Math.max(bottomLeftJoin, bottomRightJoin);
+
+          if (radii.topLeft > 0) {
+              layers.push({
+                  gradient: `radial-gradient( circle ${radii.topLeft}px at ${radii.topLeft}px ${radii.topLeft}px, ${color} ${radii.topLeft}px, transparent ${radii.topLeft}px )`,
+                  size: baseSize,
+                  position: basePosition
+              });
+          }
+
+          if (radii.topRight > 0) {
+              layers.push({
+                  gradient: `radial-gradient( circle ${radii.topRight}px at calc(${width} - ${radii.topRight}px) ${radii.topRight}px, ${color} ${radii.topRight}px, transparent ${radii.topRight}px )`,
+                  size: baseSize,
+                  position: basePosition
+              });
+          }
+
+          if (radii.bottomRight > 0) {
+              layers.push({
+                  gradient: `radial-gradient( circle ${radii.bottomRight}px at calc(${width} - ${radii.bottomRight}px) calc(${height} - ${radii.bottomRight}px), ${color} ${radii.bottomRight}px, transparent ${radii.bottomRight}px )`,
+                  size: baseSize,
+                  position: basePosition
+              });
+          }
+
+          if (radii.bottomLeft > 0) {
+              layers.push({
+                  gradient: `radial-gradient( circle ${radii.bottomLeft}px at ${radii.bottomLeft}px calc(${height} - ${radii.bottomLeft}px), ${color} ${radii.bottomLeft}px, transparent ${radii.bottomLeft}px )`,
+                  size: baseSize,
+                  position: basePosition
+              });
+          }
+
+          if (topLeftJoin > 0 || topRightJoin > 0) {
+              const topWidth = topLeftJoin === 0 && topRightJoin === 0
+                  ? width
+                  : `calc(${width} - ${topLeftJoin}px - ${topRightJoin}px)`;
+              const topOffset = shape.horizontalPositioningStartingPoint === "center"
+                  ? (topLeftJoin - topRightJoin) / 2
+                  : (shape.horizontalPositioningStartingPoint === "right" ? topRightJoin : topLeftJoin);
+              layers.push({
+                  gradient: `linear-gradient(to bottom, ${color} 0 ${Math.max(topLeftJoin, topRightJoin)}px, transparent ${Math.max(topLeftJoin, topRightJoin)}px ${height}, transparent ${height} 100%)`,
+                  size: `${topWidth} ${repeatDesign}px`,
+                  position: `${this.buildHorizontalPositionWithOffset(shape, topOffset)} ${this.determineVerticalPositioningOfShape(shape)}`
+              });
+          }
+
+          if (bottomLeftJoin > 0 || bottomRightJoin > 0) {
+              const bottomWidth = bottomLeftJoin === 0 && bottomRightJoin === 0
+                  ? width
+                  : `calc(${width} - ${bottomLeftJoin}px - ${bottomRightJoin}px)`;
+              const bottomOffset = shape.horizontalPositioningStartingPoint === "center"
+                  ? (bottomLeftJoin - bottomRightJoin) / 2
+                  : (shape.horizontalPositioningStartingPoint === "right" ? bottomRightJoin : bottomLeftJoin);
+              const bottomInset = Math.max(bottomLeftJoin, bottomRightJoin);
+              layers.push({
+                  gradient: `linear-gradient(to bottom, transparent 0 calc(${height} - ${bottomInset}px), ${color} calc(${height} - ${bottomInset}px) ${height}, transparent ${height} 100%)`,
+                  size: `${bottomWidth} ${repeatDesign}px`,
+                  position: `${this.buildHorizontalPositionWithOffset(shape, bottomOffset)} ${this.determineVerticalPositioningOfShape(shape)}`
+              });
+          }
+
+          layers.push({
+              gradient: `linear-gradient(to bottom, transparent 0 ${topInsetJoin}px, ${color} ${topInsetJoin}px calc(${height} - ${bottomInsetJoin}px), transparent calc(${height} - ${bottomInsetJoin}px) 100%)`,
+              size: baseSize,
+              position: basePosition
+          });
+      });
+
+      return layers;
+  }
+
+  private buildShapeBackgroundDeclarations(shapes: ShapeDetails[], colorOverride?: string): string {
+      const layers = this.buildShapeLayers(shapes, colorOverride);
+      const gradients = layers.map((layer) => layer.gradient).join(",");
+      const sizes = layers.map((layer) => layer.size).join(",");
+      const positions = layers.map((layer) => layer.position).join(",");
+      return `background-image: ${gradients}; background-repeat: repeat-y; background-size: ${sizes}; background-position: ${positions};`;
+  }
+
+  private buildOpacityStops(color: string): string {
+      return this.opacitySteps.controls.map((control) => {
+          return `rgba(${color}, ${control.get('opacity')!.value}) ${control.get('step')!.value}%`;
+      }).join(",");
+  }
+
+  private getShimmerRgbaColor(): string {
+      const shimmerColor = this.canvasPropertiesForm.controls['shimmerColor'].value;
+      return shimmerColor.replace("rgb", "rgba").replace(")", ",1)");
+  }
+
+  private getShimmerRgbString(): string {
+      const shimmerColor = this.canvasPropertiesForm.controls['shimmerColor'].value;
+      return shimmerColor.replace("rgb(", "").replace(")", "");
+  }
+
+  private buildShimmerMaskDeclarations(stops: string): string {
+      const controls = this.canvasPropertiesForm.controls;
+      return `-webkit-mask-image: linear-gradient( ${controls['shimmerAngle'].value}deg, ${stops} ); -webkit-mask-repeat: repeat-y; -webkit-mask-size: ${controls['shimmerWidth'].value}px ${controls['canvasHeight'].value}px; -webkit-mask-position: ${controls['shimmerStartPosition'].value}% 0;`;
+  }
+
+  private buildAnimationDeclaration(): string {
+      const controls = this.canvasPropertiesForm.controls;
+      return `animation: shineForSkeleton-${this.randomSkeletonName} ${controls['playShimmerDuration'].value}s infinite;`;
+  }
+
+  private buildKeyframes(shimmerType: number, shapes: ShapeDetails[]): string {
+      const controls = this.canvasPropertiesForm.controls;
+      const name = this.randomSkeletonName;
+      if (shimmerType === 0) {
+          return `@keyframes shineForSkeleton-${name} {to {-webkit-mask-position: ${controls['shimmerEndPosition'].value}% 0}}`;
+      }
+      if (shimmerType === 1) {
+          const positions = this.buildShapeLayers(shapes).map((layer) => layer.position).join(",");
+          return `@keyframes shineForSkeleton-${name} {to {background-position: ${controls['shimmerEndPosition'].value}% 0,${positions};}}`;
+      }
+      return `@keyframes shineForSkeleton-${name} {0% {opacity: 1;}50% {opacity: 0.5;}100% {opacity: 1;}}`;
+  }
+
+  private appendGeneratedStyle(): void {
+      const head = document.getElementsByTagName('head')[0];
+      const style = document.createElement('style');
+      style.type = 'text/css';
+      style.id = 'andrew';
+      style.appendChild(document.createTextNode(this.generatedCss()));
+      head.appendChild(style);
   }
   
 
 
   generate()
   {
-      console.log("Generate!");
+      const shapes = this.getDesignDataReversed();
+      const controls = this.canvasPropertiesForm.controls;
+      const showShimmer = controls['showShimmer'].value === true;
+      const shimmerType = controls['shimmerType'].value;
+      const name = this.randomSkeletonName;
 
-      // Throw the array into reverse because css puts the first item at the top of the layer START
-      let designDataReversed: ShapeDetails[] = structuredClone(this.designData).reverse();
-      // Throw the array into reverse because css puts the first item at the top of the layer END
+      this.removeGeneratedStyle();
+      this.generatedCss.set("");
 
-      var myEle = document.getElementById("andrew");
-      if (myEle) {
-          document.getElementById("andrew")!.remove();
+      if (!showShimmer) {
+          const base = this.buildBaseDeclarations(false);
+          const shapesBackground = this.buildShapeBackgroundDeclarations(shapes);
+          this.generatedCss.set(`.skeleton-${name}:empty {${base} ${shapesBackground}}`);
+          this.appendGeneratedStyle();
+          this.recordHistory();
+          return;
       }
 
-
-      this.generatedCss = "";
-
-
-      if ((this.canvasPropertiesForm['controls']['showShimmer'].value == false))
-      {
-          /* Begin initial values START */
-          /* BLOCK 1 START */
-          this.generatedCss = this.generatedCss + ".skeleton-" + this.randomSkeletonName+":empty {";
-          this.generatedCss = this.generatedCss + "height: " + this.canvasPropertiesForm['controls']['canvasHeight'].value +"px; background-color: " + this.canvasPropertiesForm['controls']['canvasColor'].value +"; border-radius: "+this.canvasPropertiesForm['controls']['canvasBorderRadiusTopLeft'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusTopRight'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusBottomRight'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusBottomLeft'].value+"px; ";
-          this.generatedCss = this.generatedCss + "background-image: "; /* highlight */
-
-          designDataReversed.forEach((x, index) => {
-              if ((x.type == "rectangle"))
-              {
-                  // Since rectangles are only straight angles we can't do an antialias option anyway
-                  this.generatedCss = this.generatedCss + "linear-gradient( "+x.color+" "+this.determineRectangleHeightResultView(x)+", transparent 0 )";
-              }
-              if ((x.type == "circle")) {
-                  if ((x.antialias == false))
-                  {
-                      this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.diameter! / 2 + "px at " + x.diameter! / 2 + "px " + x.diameter! / 2 + "px, " + x.color + " 99%, transparent 0 )";
-                  }
-                  else
-                  {
-                      this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.diameter! / 2 + "px at " + x.diameter! / 2 + "px " + x.diameter! / 2 + "px, " + x.color + " " + (x.diameter! / 2 - 1) + "px, transparent " + x.diameter! / 2 + "px )";
-                  }
-              }
-
-              /* Do a comma for the next one, or a semicolon for the last one START */
-              if (index == designDataReversed.length - 1) {
-                  this.generatedCss = this.generatedCss + ";";
-              }
-              else
-              {
-                  this.generatedCss = this.generatedCss + ",";
-              }
-              /* Do a comma for the next one, or a semicolon for the last one END */
-
-          });
-
-          this.generatedCss = this.generatedCss + "background-repeat: repeat-y;";
-          this.generatedCss = this.generatedCss + "background-size: ";
-
-          designDataReversed.forEach((x, index) => {
-              if ((x.type == "rectangle")) {
-                  this.generatedCss = this.generatedCss + "" + this.determineRectangleWidth(x) + " " + this.canvasPropertiesForm['controls']['repeatDesign'].value + "px";
-              }
-              if ((x.type == "circle")) {
-                  this.generatedCss = this.generatedCss + "" + x.diameter + "" + x.diameterMeasurement + " " + this.canvasPropertiesForm['controls']['repeatDesign'].value + "px";
-              }
-
-              /* Do a comma for the next one, or a semicolon for the last one START */
-              if (index == designDataReversed.length - 1) {
-                  this.generatedCss = this.generatedCss + ";";
-              }
-              else {
-                  this.generatedCss = this.generatedCss + ",";
-              }
-              /* Do a comma for the next one, or a semicolon for the last one END */
-
-          });
-
-          this.generatedCss = this.generatedCss + "background-position: ";
-
-          designDataReversed.forEach((x, index) => {
-          
-                  this.generatedCss = this.generatedCss + "" + this.determineHorizontalPositioningOfShape(x) + " " + this.determineVerticalPositioningOfShape(x) + "";
-              
-
-              /* Do a comma for the next one, or a semicolon for the last one START */
-                  if (index == designDataReversed.length - 1) {
-                  this.generatedCss = this.generatedCss + ";";
-              }
-              else {
-                  this.generatedCss = this.generatedCss + ",";
-              }
-              /* Do a comma for the next one, or a semicolon for the last one END */
-
-          });
-
-          this.generatedCss = this.generatedCss + "}";
-
-          
-          /* BLOCK 1 END */
-
-          
-          /* Begin initial values END */
-      }
-      
-
-
-
-      if ((this.canvasPropertiesForm['controls']['showShimmer'].value == true))
-      {
-
-          if ((this.canvasPropertiesForm['controls']['shimmerType'].value == 0))
-          {
-
-              let amendedShimmerColor1 = this.canvasPropertiesForm['controls']['shimmerColor'].value.replace("rgb", "rgba");
-              let amendedShimmerColor2 = amendedShimmerColor1.replace(")", ",1)");
-              console.log(amendedShimmerColor2);
-
-              /* Begin initial values START */
-                          /* BLOCK 1 START */
-                          this.generatedCss = this.generatedCss + ".skeleton-" + this.randomSkeletonName+":empty {";
-                          this.generatedCss = this.generatedCss + "position: relative; height: " + this.canvasPropertiesForm['controls']['canvasHeight'].value +"px; background-color: " + this.canvasPropertiesForm['controls']['canvasColor'].value +"; border-radius: "+this.canvasPropertiesForm['controls']['canvasBorderRadiusTopLeft'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusTopRight'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusBottomRight'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusBottomLeft'].value+"px; ";
-                          this.generatedCss = this.generatedCss + "background-image: "; /* highlight */
-
-                          designDataReversed.forEach((x, index) => {
-                              if ((x.type == "rectangle"))
-                              {
-                                  // Since rectangles are only straight angles we can't do an antialias option anyway
-                                  this.generatedCss = this.generatedCss + "linear-gradient( "+x.color+" "+this.determineRectangleHeightResultView(x)+", transparent 0 )";
-                              }
-                              if ((x.type == "circle")) {
-                                  if ((x.antialias == false))
-                                  {
-                                      this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.diameter! / 2 + "px at " + x.diameter! / 2 + "px " + x.diameter! / 2 + "px, " + x.color + " 99%, transparent 0 )";
-                                  }
-                                  else
-                                  {
-                                      this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.diameter! / 2 + "px at " + x.diameter! / 2 + "px " + x.diameter! / 2 + "px, " + x.color + " " + (x.diameter! / 2 - 1) + "px, transparent " + x.diameter! / 2 + "px )";
-                                  }
-                              }
-
-                              /* Do a comma for the next one, or a semicolon for the last one START */
-                              if (index == designDataReversed.length - 1) {
-                                  this.generatedCss = this.generatedCss + ";";
-                              }
-                              else
-                              {
-                                  this.generatedCss = this.generatedCss + ",";
-                              }
-                              /* Do a comma for the next one, or a semicolon for the last one END */
-
-                          });
-
-                          this.generatedCss = this.generatedCss + "background-repeat: repeat-y;";
-                          this.generatedCss = this.generatedCss + "background-size: ";
-
-                          designDataReversed.forEach((x, index) => {
-                              if ((x.type == "rectangle")) {
-                                  this.generatedCss = this.generatedCss + "" + this.determineRectangleWidth(x) + " " + this.canvasPropertiesForm['controls']['repeatDesign'].value + "px";
-                              }
-                              if ((x.type == "circle")) {
-                                  this.generatedCss = this.generatedCss + "" + x.diameter + "" + x.diameterMeasurement + " " + this.canvasPropertiesForm['controls']['repeatDesign'].value + "px";
-                              }
-
-                              /* Do a comma for the next one, or a semicolon for the last one START */
-                              if (index == designDataReversed.length - 1) {
-                                  this.generatedCss = this.generatedCss + ";";
-                              }
-                              else {
-                                  this.generatedCss = this.generatedCss + ",";
-                              }
-                              /* Do a comma for the next one, or a semicolon for the last one END */
-
-                          });
-
-                          this.generatedCss = this.generatedCss + "background-position: ";
-
-                          designDataReversed.forEach((x, index) => {
-                          
-                                  this.generatedCss = this.generatedCss + "" + this.determineHorizontalPositioningOfShape(x) + " " + this.determineVerticalPositioningOfShape(x) + "";
-                              
-
-                              /* Do a comma for the next one, or a semicolon for the last one START */
-                                  if (index == designDataReversed.length - 1) {
-                                  this.generatedCss = this.generatedCss + ";";
-                              }
-                              else {
-                                  this.generatedCss = this.generatedCss + ",";
-                              }
-                              /* Do a comma for the next one, or a semicolon for the last one END */
-
-                          });
-
-                          this.generatedCss = this.generatedCss + "}";
-
-                          
-                          /* BLOCK 1 END */
-
-                          /* BLOCK 2 START */
-                          this.generatedCss = this.generatedCss + ".skeleton-" + this.randomSkeletonName+":empty:before {";
-                          this.generatedCss = this.generatedCss + "content: ' '; position: absolute; z-index: "+this.canvasPropertiesForm['controls']['shapesZIndex'].value+"; width: 100%; height: " + this.canvasPropertiesForm['controls']['canvasHeight'].value +"px;";
-                          this.generatedCss = this.generatedCss + "-webkit-mask-image: linear-gradient( "+this.canvasPropertiesForm['controls']['shimmerAngle'].value+"deg, "; /* highlight */
-                          
-                          this.opacitySteps.controls.forEach((control, index) => {
-                
-                            // Since rectangles are only straight angles we can't do an antialias option anyway
-                            this.generatedCss = this.generatedCss + "rgba(255, 255, 255, "+control.get('opacity')!.value+") "+control.get('step')!.value+"%";
-            
-                            /* Do a comma for the next one, or a semicolon for the last one START */
-                            if (index == this.opacitySteps.controls.length - 1) {
-                                this.generatedCss = this.generatedCss + "";
-                            }
-                            else
-                            {
-                                this.generatedCss = this.generatedCss + ",";
-                            }
-                            /* Do a comma for the next one, or a semicolon for the last one END */
-            
-                            });
-
-                          this.generatedCss = this.generatedCss + " ); -webkit-mask-repeat : repeat-y; -webkit-mask-size : " + this.canvasPropertiesForm['controls']['shimmerWidth'].value +"px " + this.canvasPropertiesForm['controls']['canvasHeight'].value +"px; -webkit-mask-position: "+this.canvasPropertiesForm['controls']['shimmerStartPosition'].value+"% 0;"; /* highlight */
-                          this.generatedCss = this.generatedCss + "background-image: "; /* highlight */
-
-                          designDataReversed.forEach((x, index) => {
-                              if ((x.type == "rectangle"))
-                              {
-                                  // Since rectangles are only straight angles we can't do an antialias option anyway
-                                  this.generatedCss = this.generatedCss + "linear-gradient( "+amendedShimmerColor2+" "+this.determineRectangleHeightResultView(x)+", transparent 0 )";
-                              }
-                              if ((x.type == "circle")) {
-                                  if ((x.antialias == false))
-                                  {
-                                      this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.diameter! / 2 + "px at " + x.diameter! / 2 + "px " + x.diameter! / 2 + "px, "+amendedShimmerColor2+" 99%, transparent 0 )";
-                                  }
-                                  else
-                                  {
-                                      this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.diameter! / 2 + "px at " + x.diameter! / 2 + "px " + x.diameter! / 2 + "px, "+amendedShimmerColor2+" " + (x.diameter! / 2 - 1) + "px, transparent " + x.diameter! / 2 + "px )";
-                                  }
-                              }
-
-                              /* Do a comma for the next one, or a semicolon for the last one START */
-                              if (index == designDataReversed.length - 1) {
-                                  this.generatedCss = this.generatedCss + ";";
-                              }
-                              else
-                              {
-                                  this.generatedCss = this.generatedCss + ",";
-                              }
-                              /* Do a comma for the next one, or a semicolon for the last one END */
-
-                          });
-
-                          this.generatedCss = this.generatedCss + "background-repeat: repeat-y;";
-                          this.generatedCss = this.generatedCss + "background-size: ";
-
-                          designDataReversed.forEach((x, index) => {
-                              if ((x.type == "rectangle")) {
-                                  this.generatedCss = this.generatedCss + "" + this.determineRectangleWidth(x) + " " + this.canvasPropertiesForm['controls']['repeatDesign'].value + "px";
-                              }
-                              if ((x.type == "circle")) {
-                                  this.generatedCss = this.generatedCss + "" + x.diameter + "" + x.diameterMeasurement + " " + this.canvasPropertiesForm['controls']['repeatDesign'].value + "px";
-                              }
-
-                              /* Do a comma for the next one, or a semicolon for the last one START */
-                              if (index == designDataReversed.length - 1) {
-                                  this.generatedCss = this.generatedCss + ";";
-                              }
-                              else {
-                                  this.generatedCss = this.generatedCss + ",";
-                              }
-                              /* Do a comma for the next one, or a semicolon for the last one END */
-
-                          });
-
-                          this.generatedCss = this.generatedCss + "background-position: ";
-
-                          designDataReversed.forEach((x, index) => {
-                          
-                                  this.generatedCss = this.generatedCss + "" + this.determineHorizontalPositioningOfShape(x) + " " + this.determineVerticalPositioningOfShape(x) + "";
-                              
-
-                              /* Do a comma for the next one, or a semicolon for the last one START */
-                                  if (index == designDataReversed.length - 1) {
-                                  this.generatedCss = this.generatedCss + ";";
-                              }
-                              else {
-                                  this.generatedCss = this.generatedCss + ",";
-                              }
-                              /* Do a comma for the next one, or a semicolon for the last one END */
-
-                          });
-                          /* BLOCK 2 END */
-                          /* Begin initial values END */
-          }
-
-          if ((this.canvasPropertiesForm['controls']['shimmerType'].value == 1))
-          {
-
-
-              let amendedShimmerColor1 = this.canvasPropertiesForm['controls']['shimmerColor'].value.replace("rgb(", "");
-              let amendedShimmerColor2 = amendedShimmerColor1.replace(")", "");
-              console.log(amendedShimmerColor2);
-              
-
-              /* Begin initial values START */
-              this.generatedCss = this.generatedCss + ".skeleton-" + this.randomSkeletonName+":empty {";
-              this.generatedCss = this.generatedCss + "height: " + this.canvasPropertiesForm['controls']['canvasHeight'].value +"px; background-color: " + this.canvasPropertiesForm['controls']['canvasColor'].value +"; border-radius: "+this.canvasPropertiesForm['controls']['canvasBorderRadiusTopLeft'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusTopRight'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusBottomRight'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusBottomLeft'].value+"px; ";
-              this.generatedCss = this.generatedCss + "background-image: linear-gradient( "+this.canvasPropertiesForm['controls']['shimmerAngle'].value+"deg, "; /* highlight */
-
-              this.opacitySteps.controls.forEach((control, index) => {
-                
-                // Since rectangles are only straight angles we can't do an antialias option anyway
-                this.generatedCss = this.generatedCss + "rgba("+amendedShimmerColor2+", "+control.get('opacity')!.value+") "+control.get('step')!.value+"%";
-
-                /* Do a comma for the next one, or a semicolon for the last one START */
-                if (index == this.opacitySteps.controls.length - 1) {
-                    this.generatedCss = this.generatedCss + "";
-                }
-                else
-                {
-                    this.generatedCss = this.generatedCss + ",";
-                }
-                /* Do a comma for the next one, or a semicolon for the last one END */
-
-                });
-
-              this.generatedCss = this.generatedCss + " ),"; /* highlight */
-
-              designDataReversed.forEach((x, index) => {
-                  if ((x.type == "rectangle"))
-                  {
-                      // Since rectangles are only straight angles we can't do an antialias option anyway
-                      this.generatedCss = this.generatedCss + "linear-gradient( "+x.color+" "+this.determineRectangleHeightResultView(x)+", transparent 0 )";
-                  }
-                  if ((x.type == "circle")) {
-                      if ((x.antialias == false))
-                      {
-                          this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.diameter! / 2 + "px at " + x.diameter! / 2 + "px " + x.diameter! / 2 + "px, " + x.color + " 99%, transparent 0 )";
-                      }
-                      else
-                      {
-                          this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.diameter! / 2 + "px at " + x.diameter! / 2 + "px " + x.diameter! / 2 + "px, " + x.color + " " + (x.diameter! / 2 - 1) + "px, transparent " + x.diameter! / 2 + "px )";
-                      }
-                  }
-
-                  /* Do a comma for the next one, or a semicolon for the last one START */
-                  if (index == designDataReversed.length - 1) {
-                      this.generatedCss = this.generatedCss + ";";
-                  }
-                  else
-                  {
-                      this.generatedCss = this.generatedCss + ",";
-                  }
-                  /* Do a comma for the next one, or a semicolon for the last one END */
-
-              });
-
-              this.generatedCss = this.generatedCss + "background-repeat: repeat-y;";
-              this.generatedCss = this.generatedCss + "background-size: " + this.canvasPropertiesForm['controls']['shimmerWidth'].value +"px " + this.canvasPropertiesForm['controls']['canvasHeight'].value +"px,";
-
-              designDataReversed.forEach((x, index) => {
-                  if ((x.type == "rectangle")) {
-                      this.generatedCss = this.generatedCss + "" + this.determineRectangleWidth(x) + " " + this.canvasPropertiesForm['controls']['repeatDesign'].value + "px";
-                  }
-                  if ((x.type == "circle")) {
-                      this.generatedCss = this.generatedCss + "" + x.diameter + "" + x.diameterMeasurement + " " + this.canvasPropertiesForm['controls']['repeatDesign'].value + "px";
-                  }
-
-                  /* Do a comma for the next one, or a semicolon for the last one START */
-                  if (index == designDataReversed.length - 1) {
-                      this.generatedCss = this.generatedCss + ";";
-                  }
-                  else {
-                      this.generatedCss = this.generatedCss + ",";
-                  }
-                  /* Do a comma for the next one, or a semicolon for the last one END */
-
-              });
-
-              this.generatedCss = this.generatedCss + "background-position: "+this.canvasPropertiesForm['controls']['shimmerStartPosition'].value+"% 0,";
-
-              designDataReversed.forEach((x, index) => {
-              
-                      this.generatedCss = this.generatedCss + "" + this.determineHorizontalPositioningOfShape(x) + " " + this.determineVerticalPositioningOfShape(x) + "";
-                  
-
-                  /* Do a comma for the next one, or a semicolon for the last one START */
-                      if (index == designDataReversed.length - 1) {
-                      this.generatedCss = this.generatedCss + ";";
-                  }
-                  else {
-                      this.generatedCss = this.generatedCss + ",";
-                  }
-                  /* Do a comma for the next one, or a semicolon for the last one END */
-
-              });
-
-              /* Begin initial values END */
-          }
-
-          if ((this.canvasPropertiesForm['controls']['shimmerType'].value == 2))
-          {
-
-              /* Begin initial values START */
-                          /* BLOCK 1 START */
-                          this.generatedCss = this.generatedCss + ".skeleton-" + this.randomSkeletonName+":empty {";
-                          this.generatedCss = this.generatedCss + "position: relative; height: " + this.canvasPropertiesForm['controls']['canvasHeight'].value +"px; background-color: " + this.canvasPropertiesForm['controls']['canvasColor'].value +"; border-radius: "+this.canvasPropertiesForm['controls']['canvasBorderRadiusTopLeft'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusTopRight'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusBottomRight'].value+"px "+this.canvasPropertiesForm['controls']['canvasBorderRadiusBottomLeft'].value+"px; ";
-                          this.generatedCss = this.generatedCss + "}";
-
-                          
-                          /* BLOCK 1 END */
-
-                          /* BLOCK 2 START */
-                          this.generatedCss = this.generatedCss + ".skeleton-" + this.randomSkeletonName+":empty:before {";
-                          this.generatedCss = this.generatedCss + "content: ' '; position: absolute; z-index: "+this.canvasPropertiesForm['controls']['shapesZIndex'].value+"; width: 100%; height: " + this.canvasPropertiesForm['controls']['canvasHeight'].value +"px;";
-                          this.generatedCss = this.generatedCss + "background-image: "; /* highlight */
-
-                          designDataReversed.forEach((x, index) => {
-                              if ((x.type == "rectangle"))
-                              {
-                                  // Since rectangles are only straight angles we can't do an antialias option anyway
-                                  this.generatedCss = this.generatedCss + "linear-gradient( "+x.color+" "+this.determineRectangleHeightResultView(x)+", transparent 0 )";
-                              }
-                              if ((x.type == "circle")) {
-                                  if ((x.antialias == false))
-                                  {
-                                      this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.diameter! / 2 + "px at " + x.diameter! / 2 + "px " + x.diameter! / 2 + "px, " + x.color + " 99%, transparent 0 )";
-                                  }
-                                  else
-                                  {
-                                      this.generatedCss = this.generatedCss + "radial-gradient( circle " + x.diameter! / 2 + "px at " + x.diameter! / 2 + "px " + x.diameter! / 2 + "px, " + x.color + " " + (x.diameter! / 2 - 1) + "px, transparent " + x.diameter! / 2 + "px )";
-                                  }
-                              }
-
-                              /* Do a comma for the next one, or a semicolon for the last one START */
-                              if (index == designDataReversed.length - 1) {
-                                  this.generatedCss = this.generatedCss + ";";
-                              }
-                              else
-                              {
-                                  this.generatedCss = this.generatedCss + ",";
-                              }
-                              /* Do a comma for the next one, or a semicolon for the last one END */
-
-                          });
-
-                          this.generatedCss = this.generatedCss + "background-repeat: repeat-y;";
-                          this.generatedCss = this.generatedCss + "background-size: ";
-
-                          designDataReversed.forEach((x, index) => {
-                              if ((x.type == "rectangle")) {
-                                  this.generatedCss = this.generatedCss + "" + this.determineRectangleWidth(x) + " " + this.canvasPropertiesForm['controls']['repeatDesign'].value + "px";
-                              }
-                              if ((x.type == "circle")) {
-                                  this.generatedCss = this.generatedCss + "" + x.diameter + "" + x.diameterMeasurement + " " + this.canvasPropertiesForm['controls']['repeatDesign'].value + "px";
-                              }
-
-                              /* Do a comma for the next one, or a semicolon for the last one START */
-                              if (index == designDataReversed.length - 1) {
-                                  this.generatedCss = this.generatedCss + ";";
-                              }
-                              else {
-                                  this.generatedCss = this.generatedCss + ",";
-                              }
-                              /* Do a comma for the next one, or a semicolon for the last one END */
-
-                          });
-
-                          this.generatedCss = this.generatedCss + "background-position: ";
-
-                          designDataReversed.forEach((x, index) => {
-                          
-                                  this.generatedCss = this.generatedCss + "" + this.determineHorizontalPositioningOfShape(x) + " " + this.determineVerticalPositioningOfShape(x) + "";
-                              
-
-                              /* Do a comma for the next one, or a semicolon for the last one START */
-                                  if (index == designDataReversed.length - 1) {
-                                  this.generatedCss = this.generatedCss + ";";
-                              }
-                              else {
-                                  this.generatedCss = this.generatedCss + ",";
-                              }
-                              /* Do a comma for the next one, or a semicolon for the last one END */
-
-                          });
-                          /* BLOCK 2 END */
-                          /* Begin initial values END */
-          }
-          
-          this.generatedCss = this.generatedCss + "animation: shineForSkeleton-" + this.randomSkeletonName + " " + this.canvasPropertiesForm['controls']['playShimmerDuration'].value + "s infinite;}";
-
-          /* Animation START */
-          if ((this.canvasPropertiesForm['controls']['shimmerType'].value == 0))
-          {
-              this.generatedCss = this.generatedCss + "@keyframes shineForSkeleton-" + this.randomSkeletonName +" {to {-webkit-mask-position: "+this.canvasPropertiesForm['controls']['shimmerEndPosition'].value+"% 0}}";
-          }
-
-          if ((this.canvasPropertiesForm['controls']['shimmerType'].value == 1))
-          {
-              this.generatedCss = this.generatedCss + "@keyframes shineForSkeleton-" + this.randomSkeletonName +" {to {background-position: "+this.canvasPropertiesForm['controls']['shimmerEndPosition'].value+"% 0,";
-
-              designDataReversed.forEach((x, index) => {
-
-                  this.generatedCss = this.generatedCss + "" + this.determineHorizontalPositioningOfShape(x) + " " + this.determineVerticalPositioningOfShape(x) + "";
-  
-  
-                  /* Do a comma for the next one, or a semicolon for the last one START */
-                  if (index == designDataReversed.length - 1) {
-                      this.generatedCss = this.generatedCss + ";";
-                  }
-                  else {
-                      this.generatedCss = this.generatedCss + ",";
-                  }
-                  /* Do a comma for the next one, or a semicolon for the last one END */
-  
-              });
-  
-              this.generatedCss = this.generatedCss + "}}";
-          }
-
-          if ((this.canvasPropertiesForm['controls']['shimmerType'].value == 2))
-          {
-              this.generatedCss = this.generatedCss + "@keyframes shineForSkeleton-" + this.randomSkeletonName +" {0% {opacity: 1;}50% {opacity: 0.5;}100% {opacity: 1;}}";
-          }
-          /* Animation END */
-
+      if (shimmerType === 0) {
+          const base = this.buildBaseDeclarations(true);
+          const shapesBackground = this.buildShapeBackgroundDeclarations(shapes);
+          const maskStops = this.buildOpacityStops("255, 255, 255");
+          const maskDeclarations = this.buildShimmerMaskDeclarations(maskStops);
+          const shimmerColor = this.getShimmerRgbaColor();
+          const shimmerBackground = this.buildShapeBackgroundDeclarations(shapes, shimmerColor);
+          const animation = this.buildAnimationDeclaration();
+
+          const baseBlock = `.skeleton-${name}:empty {${base} ${shapesBackground}}`;
+          const beforeBlock = `.skeleton-${name}:empty:before {content: ' '; position: absolute; z-index: ${controls['shapesZIndex'].value}; width: 100%; height: ${controls['canvasHeight'].value}px; ${maskDeclarations} ${shimmerBackground} ${animation}}`;
+          this.generatedCss.set(`${baseBlock}${beforeBlock}${this.buildKeyframes(shimmerType, shapes)}`);
+          this.appendGeneratedStyle();
+          this.recordHistory();
+          return;
       }
 
+      if (shimmerType === 1) {
+          const base = this.buildBaseDeclarations(false);
+          const shimmerStops = this.buildOpacityStops(this.getShimmerRgbString());
+          const shimmerGradient = `linear-gradient( ${controls['shimmerAngle'].value}deg, ${shimmerStops} )`;
+          const layers = this.buildShapeLayers(shapes);
+          const shapeGradients = layers.map((layer) => layer.gradient).join(",");
+          const backgroundImage = `background-image: ${shimmerGradient},${shapeGradients};`;
+          const backgroundSize = `${controls['shimmerWidth'].value}px ${controls['canvasHeight'].value}px,${layers.map((layer) => layer.size).join(",")}`;
+          const backgroundPosition = `${controls['shimmerStartPosition'].value}% 0,${layers.map((layer) => layer.position).join(",")}`;
+          const animation = this.buildAnimationDeclaration();
 
-      //this.generatedCss = '#designCanvas {background-color: pink}';
-      const head = document.getElementsByTagName('head')[0];
-      const style = document.createElement('style');
-      style.type = 'text/css';
-      style.id = 'andrew';
-      style.appendChild(document.createTextNode(this.generatedCss));
-      head.appendChild(style);
+          const block = `.skeleton-${name}:empty {${base} ${backgroundImage} background-repeat: repeat-y; background-size: ${backgroundSize}; background-position: ${backgroundPosition}; ${animation}}`;
+          this.generatedCss.set(`${block}${this.buildKeyframes(shimmerType, shapes)}`);
+          this.appendGeneratedStyle();
+          this.recordHistory();
+          return;
+      }
+
+      if (shimmerType === 2) {
+          const base = this.buildBaseDeclarations(true);
+          const shapesBackground = this.buildShapeBackgroundDeclarations(shapes);
+          const animation = this.buildAnimationDeclaration();
+
+          const baseBlock = `.skeleton-${name}:empty {${base}}`;
+          const beforeBlock = `.skeleton-${name}:empty:before {content: ' '; position: absolute; z-index: ${controls['shapesZIndex'].value}; width: 100%; height: ${controls['canvasHeight'].value}px; ${shapesBackground} ${animation}}`;
+          this.generatedCss.set(`${baseBlock}${beforeBlock}${this.buildKeyframes(shimmerType, shapes)}`);
+          this.appendGeneratedStyle();
+          this.recordHistory();
+          return;
+      }
   }
 
 
   addCircle(position: any) {
-      this.designData.push({
-          "type": "circle",
+      const data: ShapeDetails[] = [...this.designData(), {
+          "type": "circle" as const,
           "width": null,
           "widthMeasurement": null,
           "widthCalc": null,
@@ -1213,7 +1380,11 @@ export class AppComponent implements OnInit {
           "diameterCalc": null,
           "diameterCalcAmount": null,
           "diameterCalcUnit": null,
-          "color": this.newShapeColor,
+          "borderRadiusTopLeft": 0,
+          "borderRadiusTopRight": 0,
+          "borderRadiusBottomRight": 0,
+          "borderRadiusBottomLeft": 0,
+          "color": this.newShapeColor(),
           "horizontalPositioningStartingPoint": "left",
           "horizontalPositioningAmount": position.x,
           "horizontalPositioningUnit": "px",
@@ -1222,17 +1393,15 @@ export class AppComponent implements OnInit {
           "verticalPositioningUnit": "px",
           "allowShimmerOverlay": true,
           "antialias": true
-      });
-
-      
-
+      }];
+      this.designData.set(data);
       this.generate();
   }
 
 
   addRectangle(position: any) {
-      this.designData.push({
-          "type": "rectangle",
+      const data: ShapeDetails[] = [...this.designData(), {
+          "type": "rectangle" as const,
           "width": 300,
           "widthMeasurement": "px",
           "widthCalc": null,
@@ -1248,7 +1417,11 @@ export class AppComponent implements OnInit {
           "diameterCalc": null,
           "diameterCalcAmount": null,
           "diameterCalcUnit": null,
-          "color": this.newShapeColor,
+          "borderRadiusTopLeft": 0,
+          "borderRadiusTopRight": 0,
+          "borderRadiusBottomRight": 0,
+          "borderRadiusBottomLeft": 0,
+          "color": this.newShapeColor(),
           "horizontalPositioningStartingPoint": "left",
           "horizontalPositioningAmount": position.x,
           "horizontalPositioningUnit": "px",
@@ -1257,22 +1430,15 @@ export class AppComponent implements OnInit {
           "verticalPositioningUnit": "px",
           "allowShimmerOverlay": true,
           "antialias": true
-      });
-
-      
-
+      }];
+      this.designData.set(data);
       this.generate();
   }
 
 
   highlightItem(index: number, item: ShapeDetails)
   {
-
-      console.log("qwwww");
-
-      this.selectedType = item.type;
-
-      this.highlightedItem = index;
+      this.highlightedItem.set(index);
 
       this.myForm.controls['width'].patchValue(item.width);
       this.myForm.controls['widthMeasurement'].patchValue(item.widthMeasurement);
@@ -1289,6 +1455,10 @@ export class AppComponent implements OnInit {
       this.myForm.controls['diameterCalc'].patchValue(item.diameterCalc);
       this.myForm.controls['diameterCalcAmount'].patchValue(item.diameterCalcAmount);
       this.myForm.controls['diameterCalcUnit'].patchValue(item.diameterCalcUnit);
+      this.myForm.controls['borderRadiusTopLeft'].patchValue(item.borderRadiusTopLeft ?? 0);
+      this.myForm.controls['borderRadiusTopRight'].patchValue(item.borderRadiusTopRight ?? 0);
+      this.myForm.controls['borderRadiusBottomRight'].patchValue(item.borderRadiusBottomRight ?? 0);
+      this.myForm.controls['borderRadiusBottomLeft'].patchValue(item.borderRadiusBottomLeft ?? 0);
       this.myForm.controls['color'].patchValue(item.color);
       this.myForm.controls['horizontalPositioningStartingPoint'].patchValue(item.horizontalPositioningStartingPoint);
       this.myForm.controls['horizontalPositioningAmount'].patchValue(item.horizontalPositioningAmount);
@@ -1304,10 +1474,10 @@ export class AppComponent implements OnInit {
   deleteItem(index: number)
   {
 
-      this.highlightedItem = -1;
-      this.selectedType = null;
-
-      this.designData.splice(index, 1)
+      this.highlightedItem.set(-1);
+      const data = [...this.designData()];
+      data.splice(index, 1);
+      this.designData.set(data);
       
       this.generate();
   }
@@ -1326,10 +1496,12 @@ export class AppComponent implements OnInit {
      
         var reader = new FileReader();
         reader.onload = (event) => {
-          //console.log(event.target.result);
-          this.designCanvasTempBackgroundImage = event.target!.result;
-          this.tempBackgroundXPos = 0;
-          this.tempBackgroundYPos = 0;
+          const result = event.target?.result;
+          if (typeof result === 'string') {
+            this.designCanvasTempBackgroundImage.set(result);
+            this.tempBackgroundXPos.set(0);
+            this.tempBackgroundYPos.set(0);
+          }
         };
      
         reader.readAsDataURL(blob);

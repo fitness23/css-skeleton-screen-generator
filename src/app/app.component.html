@@ -1,4 +1,4 @@
-@if (showModal) {
+@if (showModal()) {
   <div class="verticalAndHorizontalAlignmentContainer1">
     <div class="verticalAndHorizontalAlignmentContainer2">
       <div class="verticalAndHorizontalAlignmentContainer3">
@@ -15,459 +15,83 @@
   </div>
 }
 
-<div id="designView">
-  <div id="designViewInner">
-    <div class="paneLabel dark">Design View</div>
-    <div class="preMadeTemplateOptions">
-      <div class="premadeTemplates">
-        <label>Templates:</label>
-        <div class="optionContainer">
-          <div class="option" [class]="{'active' : selectedTemplate == 'option1'}" (click)="createTemplate('option1')">blog</div>
-          <div class="option" [class]="{'active' : selectedTemplate == 'option2'}" (click)="createTemplate('option2')">list</div>
-          <div class="option" [class]="{'active' : selectedTemplate == 'option3'}" (click)="createTemplate('option3')">video</div>
-          <div class="option" [class]="{'active' : selectedTemplate == 'option4'}" (click)="createTemplate('option4')">blank</div>
-        </div>
-        <div class="rightClickInstructions">Right click the canvas to add more shapes. Left click on existing shapes to edit them.</div>
+@if (showGuide()) {
+  <div class="guideOverlay">
+    <div class="guideCard">
+      <div class="guideTitle">Welcome to the Skeleton Builder</div>
+      <div class="guideBody">Start with a template or right click the canvas to add shapes. Use the tools on the right to fine-tune sizing, color, and shimmer effects.</div>
+      <div class="guideList">
+        <div>1. Pick a template (blog, list, video, blank).</div>
+        <div>2. Right click to add circles or rectangles.</div>
+        <div>3. Paste a screenshot to align shapes.</div>
+        <div>4. Copy CSS/HTML from the bottom.</div>
       </div>
-    </div>
-
-    <div class="tip">
-      @if (designCanvasTempBackgroundImage == null) {
-            <div>Paste your screen onto the canvas in order to properly line up the shapes. Take a print screen and paste using ctrl+v.</div>
-        }
-      
-        @if (designCanvasTempBackgroundImage != null) {
-            <div>Use the arrow keys to reposition the background.<br />Hit the delete key when you want to remove the background.</div>
-        }
-    </div>
-
-    <div class="container">
-      <div id="designCanvas" [style]="{'height': canvasPropertiesForm.controls['canvasHeight'].value+'px', 'background-color': canvasPropertiesForm.controls['canvasColor'].value, 'border-radius': canvasPropertiesForm.controls['canvasBorderRadiusTopLeft'].value+'px '+canvasPropertiesForm.controls['canvasBorderRadiusTopRight'].value+'px '+canvasPropertiesForm.controls['canvasBorderRadiusBottomRight'].value+'px '+canvasPropertiesForm.controls['canvasBorderRadiusBottomLeft'].value+'px', 'background-image': designCanvasTempBackgroundImage != null ? 'url(' + designCanvasTempBackgroundImage + ')' : 'none', 'background-position': designCanvasTempBackgroundImage != null ? ''+tempBackgroundXPos+'px '+tempBackgroundYPos+'px' : 'inital'}" (contextmenu)="open($event, $event); $event.preventDefault();" (paste)="onPaste($event)">
-        <div (clickOutside)="onClickedOutside($event)">
-          @for (item of designData; track item; let i = $index) {
-            <div class="itemContainer" [class]="{'active' : i == highlightedItem}" [style]="{'height': canvasPropertiesForm.controls['repeatDesign'].value+'px'}">
-              <div class="itemInnerContainer" [class]="{'horizontalCenter' : item.horizontalPositioningStartingPoint === 'center', 'verticalCenter' : item.verticalPositioningStartingPoint === 'center'}">
-                <div class="item"
-                [ngStyle]="{
-                  'background-color': item.color,
-                  'border-radius': item.type == 'circle' ? item.diameter+'px' : 0+'px',
-                  'width': item.type == 'circle' ? item.diameter+item.diameterMeasurement! : determineRectangleWidth(item),
-                  'height': item.type == 'circle' ? item.diameter+'px' : determineRectangleHeightDesignView(item),
-                  'left': item.horizontalPositioningStartingPoint == 'left' ? item.horizontalPositioningAmount+item.horizontalPositioningUnit : 'auto',
-                  'right': item.horizontalPositioningStartingPoint == 'right' ? item.horizontalPositioningAmount+item.horizontalPositioningUnit : 'auto',
-                  'top': item.verticalPositioningStartingPoint == 'top' ? item.verticalPositioningAmount+item.verticalPositioningUnit : 'auto',
-                  'bottom': item.verticalPositioningStartingPoint == 'bottom' ? item.verticalPositioningAmount+item.verticalPositioningUnit : 'auto'
-                  }"
-                  (click)="highlightItem(i,item)"
-                  >
-                </div>
-              </div>
-            </div>
-          }
-        </div>
-        <div id="repeatDesignMarker" [style]="{'top': canvasPropertiesForm.controls['repeatDesign'].value+'px'}">Repeat Design</div>
-      </div>
+      <button type="button" class="standardButton" (click)="dismissGuide()">Got it</button>
     </div>
   </div>
-</div>
-<div id="designTools">
-  <div class="paneLabel light">
-    <div class="designToolsPaneLabel">Tools</div>
+}
 
-    <div class="newShapeColor">
-      <label>New Shape Color</label>
-      <div class="colorToChoose" [(colorPicker)]="newShapeColor" [style.background]="newShapeColor" [cpPosition]="'bottom-right'" [cpWidth]="'200'"></div>
-    </div>
-  </div>
+<app-design-view
+  [selectedTemplate]="selectedTemplate()"
+  [showTips]="showTips()"
+  [designCanvasTempBackgroundImage]="designCanvasTempBackgroundImage()"
+  [tempBackgroundXPos]="tempBackgroundXPos()"
+  [tempBackgroundYPos]="tempBackgroundYPos()"
+  [designData]="designData()"
+  [highlightedItem]="highlightedItem()"
+  [canvasPropertiesForm]="canvasPropertiesForm"
+  [determineRectangleWidth]="determineRectangleWidth.bind(this)"
+  [determineRectangleHeightDesignView]="determineRectangleHeightDesignView.bind(this)"
+  (templateSelect)="createTemplate($event)"
+  (toggleTips)="showTips.set(!showTips())"
+  (contextMenu)="open($event, $event)"
+  (paste)="onPaste($event)"
+  (clickedOutside)="onClickedOutside($event)"
+  (itemClick)="highlightItem($event.index, $event.item)"
+  (dragEnded)="onShapeDragEnd($event.index, $event.event)"
+></app-design-view>
 
+<app-tools-panel
+  [myForm]="myForm"
+  [canvasPropertiesForm]="canvasPropertiesForm"
+  [newShapeColor]="newShapeColor()"
+  [highlightedItem]="highlightedItem()"
+  [selectedType]="selectedType()"
+  [opacitySteps]="opacitySteps"
+  [showAdvanced]="showAdvancedControls()"
+  [canUndo]="canUndo()"
+  [canRedo]="canRedo()"
+  [presetName]="presetName()"
+  [userPresets]="userPresets()"
+  (newShapeColorChange)="newShapeColor.set($event)"
+  (focusInput)="onFocus()"
+  (blurInput)="onBlur()"
+  (horizontalPositioningStartingPointChanged)="horizontalPositioningStartingPointChanged()"
+  (verticalPositioningStartingPointChanged)="verticalPositioningStartingPointChanged()"
+  (widthMeasurementChanged)="widthMeasurementChanged()"
+  (widthCalcChanged)="widthCalcChanged()"
+  (heightMeasurementChanged)="heightMeasurementChanged()"
+  (heightCalcChanged)="heightCalcChanged()"
+  (diameterCalcChanged)="diameterCalcChanged()"
+  (changeColor)="changeColor($event)"
+  (syncHeight)="syncHeight()"
+  (addOpacityStep)="addOpacityStep()"
+  (removeOpacityStep)="removeOpacityStep($event)"
+  (generate)="generate()"
+  (changeCanvasColorBasedOnShimmerType)="changeCanvasColorBasedOnShimmerType()"
+  (toggleAdvanced)="showAdvancedControls.set(!showAdvancedControls())"
+  (undo)="undo()"
+  (redo)="redo()"
+  (presetNameChange)="updatePresetName($event)"
+  (savePreset)="savePreset()"
+  (loadPreset)="loadPreset($event)"
+  (deletePreset)="deletePreset($event)"
+  (exportPresets)="exportPresets()"
+  (importPresets)="importPresets($event)"
+></app-tools-panel>
 
-  <div id="tools">
-
-
-    <form [formGroup]="myForm">
-
-
-      @if (highlightedItem != -1) {
-        <div id="itemSpecificDetails">
-          <ul>
-            <li class="subHeading"><div>Item Properties</div></li>
-            <li class="itemCoreDetails">
-              <div class="itemHeading">Horizontal Positioning</div>
-              <div class="itemCoreDetailsContainer">
-                <div class="block">
-                  <label>Starting Point</label>
-                  <select formControlName="horizontalPositioningStartingPoint" (change)="horizontalPositioningStartingPointChanged()">
-                    <option [value]="'left'">left</option>
-                    <option [value]="'center'">center</option>
-                    <option [value]="'right'">right</option>
-                  </select>
-                </div>
-                @if (myForm.controls['horizontalPositioningStartingPoint'].value != 'center') {
-                  <div class="block">
-                    <label>Amount</label>
-                    <input type="number" min="0" formControlName="horizontalPositioningAmount" (focus)="onFocus()" (blur)="onBlur()" />
-                  </div>
-                  <div class="block">
-                    <label>Unit</label>
-                    <select formControlName="horizontalPositioningUnit">
-                      <option [value]="'px'">px</option>
-                      <option [value]="'%'">%</option>
-                      <option [value]="'rem'">rem</option>
-                      <option [value]="'em'">em</option>
-                      <option [value]="'cm'">cm</option>
-                      <option [value]="'ch'">ch</option>
-                    </select>
-                  </div>
-                }
-              </div>
-            </li>
-            <li class="itemCoreDetails">
-              <div class="itemHeading">Vertical Positioning</div>
-              <div class="itemCoreDetailsContainer">
-                <div class="block">
-                  <label>Starting Point</label>
-                  <select formControlName="verticalPositioningStartingPoint" (change)="verticalPositioningStartingPointChanged()">
-                    <option [value]="'top'">top</option>
-                    <!--<option [value]="'center'">center</option>-->
-                    <!--<option [value]="'bottom'">bottom</option>-->
-                  </select>
-                </div>
-                @if (myForm.controls['verticalPositioningStartingPoint'].value != 'center') {
-                  <div class="block">
-                    <label>Amount</label>
-                    <input type="number" min="0" formControlName="verticalPositioningAmount" (focus)="onFocus()" (blur)="onBlur()" />
-                  </div>
-                  <div class="block">
-                    <label>Unit</label>
-                    <select formControlName="verticalPositioningUnit">
-                      <option [value]="'px'">px</option>
-                      <option [value]="'%'">%</option>
-                      <option [value]="'rem'">rem</option>
-                      <option [value]="'em'">em</option>
-                      <option [value]="'cm'">cm</option>
-                      <option [value]="'ch'">ch</option>
-                    </select>
-                  </div>
-                }
-              </div>
-            </li>
-            @if (selectedType == 'rectangle') {
-              <li class="itemCoreDetails">
-                <div class="itemHeading">Width</div>
-                <div class="itemCoreDetailsContainer">
-                  <div class="block">
-                    <label>Amount</label>
-                    <input type="number" min="0" formControlName="width" (focus)="onFocus()" (blur)="onBlur()" />
-                  </div>
-                  <div class="block">
-                    <label>Unit</label>
-                    <select formControlName="widthMeasurement" (change)="widthMeasurementChanged()">
-                      <option [value]="'px'">px</option>
-                      <option [value]="'%'">%</option>
-                    </select>
-                  </div>
-                  <div class="block">
-                    <label>Calc</label>
-                    <select formControlName="widthCalc" (change)="widthCalcChanged()">
-                      <option [value]="null">None</option>
-                      <option [value]="'-'">-</option>
-                      <option [value]="'+'">+</option>
-                      <option [value]="'*'">*</option>
-                      <option [value]="'/'">/</option>
-                    </select>
-                  </div>
-                  @if (myForm.controls['widthCalc'].value != null) {
-                    <div class="block">
-                      <label>Amount</label>
-                      <input type="number" min="0" formControlName="widthCalcAmount" (focus)="onFocus()" (blur)="onBlur()" />
-                    </div>
-                  }
-                  @if ((myForm.controls['widthCalc'].value != null) && ((myForm.controls['widthCalc'].value === '-') || (myForm.controls['widthCalc'].value === '+'))) {
-                    <div class="block">
-                      <label>Unit</label>
-                      <select formControlName="widthCalcUnit">
-                        <option [value]="'px'">px</option>
-                        <option [value]="'%'">%</option>
-                        <option [value]="'rem'">rem</option>
-                        <option [value]="'em'">em</option>
-                      </select>
-                    </div>
-                  }
-                </div>
-              </li>
-            }
-            @if (selectedType == 'rectangle') {
-              <li class="itemCoreDetails">
-                <div class="itemHeading">Height</div>
-                <div class="itemCoreDetailsContainer">
-                  <div class="block">
-                    <label>Amount</label>
-                    <input type="number" min="0" formControlName="height" (focus)="onFocus()" (blur)="onBlur()" />
-                  </div>
-                  <div class="block">
-                    <label>Unit</label>
-                    <select formControlName="heightMeasurement" (change)="heightMeasurementChanged()">
-                      <option [value]="'px'">px</option>
-                      <option [value]="'%'">%</option>
-                    </select>
-                  </div>
-                  <div class="block">
-                    <label>Calc</label>
-                    <select formControlName="heightCalc" (change)="heightCalcChanged()">
-                      <option [value]="null">None</option>
-                      <option [value]="'-'">-</option>
-                      <option [value]="'+'">+</option>
-                      <option [value]="'*'">*</option>
-                      <option [value]="'/'">/</option>
-                    </select>
-                  </div>
-                  @if (myForm.controls['heightCalc'].value != null) {
-                    <div class="block">
-                      <label>Amount</label>
-                      <input type="number" min="0" formControlName="heightCalcAmount" (focus)="onFocus()" (blur)="onBlur()" />
-                    </div>
-                  }
-                  @if ((myForm.controls['heightCalc'].value != null) && ((myForm.controls['heightCalc'].value === '-') || (myForm.controls['heightCalc'].value === '+'))) {
-                    <div class="block">
-                      <label>Unit</label>
-                      <select formControlName="heightCalcUnit">
-                        <option [value]="'px'">px</option>
-                        <option [value]="'%'">%</option>
-                        <option [value]="'rem'">rem</option>
-                        <option [value]="'em'">em</option>
-                      </select>
-                    </div>
-                  }
-                </div>
-              </li>
-            }
-            @if (selectedType == 'circle') {
-              <li class="itemCoreDetails">
-                <div class="itemHeading">Diameter</div>
-                <div class="itemCoreDetailsContainer">
-                  <div class="block">
-                    <label>Amount</label>
-                    <input type="number" min="0" formControlName="diameter" (keyup)="syncHeight()" (change)="syncHeight()" (focus)="onFocus()" (blur)="onBlur()" />
-                  </div>
-                  <div class="block">
-                    <label>Unit</label>
-                    <div>px</div>
-                  </div>
-                  <!--
-                  <div class="block">
-                    <label>Calc</label>
-                    <select formControlName="diameterCalc" (change)="diameterCalcChanged()">
-                      <option [ngValue]="null">None</option>
-                      <option [ngValue]="'-'">-</option>
-                      <option [ngValue]="'+'">+</option>
-                      <option [ngValue]="'*'">*</option>
-                      <option [ngValue]="'/'">/</option>
-                    </select>
-                  </div>
-                  <div class="block" *ngIf="myForm.controls.diameterCalc.value != null">
-                    <label>Amount</label>
-                    <input type="number" min="0" formControlName="diameterCalcAmount" />
-                  </div>
-                  <div class="block" *ngIf="(myForm.controls.diameterCalc.value != null) && ((myForm.controls.diameterCalc.value === '-') || (myForm.controls.diameterCalc.value === '+'))">
-                    <label>Unit</label>
-                    <select formControlName="diameterCalcUnit">
-                      <option [ngValue]="'px'">px</option>
-                      <option [ngValue]="'%'">%</option>
-                      <option [ngValue]="'rem'">rem</option>
-                      <option [ngValue]="'em'">em</option>
-                    </select>
-                  </div>
-                  -->
-                </div>
-              </li>
-            }
-            <li class="colorQuestion" style="position: relative;">
-              <label>Color</label>
-              <div class="colorToChoose" [(colorPicker)]="myForm.controls['color'].value" [style.background]="myForm.controls['color'].value" [cpPosition]="'bottom'" [cpWidth]="'200'" (colorPickerChange)="changeColor($event)"></div>
-            </li>
-            <!--<li class="checkboxQuestion">
-            <input type="checkbox" formControlName="allowShimmerOverlay" />
-            <label>Allow shimmer overlay</label>
-          </li>-->
-          <li class="checkboxQuestion">
-            <input type="checkbox" formControlName="antialias" />
-            <label>Anti-alias (Only really going to see this on circles)</label>
-          </li>
-          <!--<li><button type="button" (click)="generate()">Generate</button></li>-->
-        </ul>
-      </div>
-    }
-
-
-
-
-  </form>
-
-  <form [formGroup]="canvasPropertiesForm">
-  <ul>
-
-
-
-    <!--<li class="addShape">
-    <label>Add Shape</label>
-    <div>
-      <button type="button" (click)="addCircle()">Add Circle</button>
-      <button type="button" (click)="addRectangle()">Add Rectangle / Square</button>
-    </div>
-  </li>-->
-  <li class="subHeading">Canvas Settings</li>
-  <li class="multipleQuestions">
-    <div class="title">Basics</div>
-    <div class="options">
-      <div class="block" style="position: relative;">
-        <label>Color</label>
-        <div class="colorToChoose" [(colorPicker)]="canvasPropertiesForm.controls['canvasColor'].value" [style.background]="canvasPropertiesForm.controls['canvasColor'].value" [cpPosition]="'bottom'" [cpWidth]="'200'" (colorPickerChange)="generate()"></div>
-      </div>
-      <div class="block">
-        <label>Height</label>
-        <input type="number" min="0" formControlName="canvasHeight" (change)="generate()" (keyup)="generate()" />
-      </div>
-      <div class="block">
-        <label>Repeat Design</label>
-        <input type="number" min="0" formControlName="repeatDesign" (change)="generate()" (keyup)="generate()" />
-      </div>
-      <div class="block">
-        <label>Z-Index</label>
-        <input type="number" min="1" formControlName="shapesZIndex" (change)="generate()" (keyup)="generate()" />
-      </div>
-    </div>
-  </li>
-  <li class="multipleQuestions">
-    <div class="title">Border Radius</div>
-    <div class="options">
-      <div class="block">
-        <label>Top Left</label>
-        <input type="number" min="0" formControlName="canvasBorderRadiusTopLeft" (change)="generate()" (keyup)="generate()" />
-      </div>
-      <div class="block">
-        <label>Top Right</label>
-        <input type="number" min="0" formControlName="canvasBorderRadiusTopRight" (change)="generate()" (keyup)="generate()" />
-      </div>
-      <div class="block">
-        <label>Bottom Right</label>
-        <input type="number" min="0" formControlName="canvasBorderRadiusBottomRight" (change)="generate()" (keyup)="generate()" />
-      </div>
-      <div class="block">
-        <label>Bottom Left</label>
-        <input type="number" min="0" formControlName="canvasBorderRadiusBottomLeft" (change)="generate()" (keyup)="generate()" />
-      </div>
-    </div>
-  </li>
-
-  <li class="multipleQuestions">
-    <div class="title">Shimmer <input type="checkbox" formControlName="showShimmer" (change)="generate()" /></div>
-    @if (canvasPropertiesForm['controls']['showShimmer'].value == true) {
-      <div class="options">
-        <div class="block">
-          <label>Type</label>
-          <select formControlName="shimmerType" (change)="changeCanvasColorBasedOnShimmerType();generate()">
-            <option [ngValue]="0">Affect shapes only</option>
-            <option [ngValue]="1">Affect whole panel</option>
-            <option [ngValue]="2">Fade in and out</option>
-          </select>
-        </div>
-        <div class="block">
-          <label>Duration</label>
-          <input type="number" formControlName="playShimmerDuration" (change)="generate()" (keyup)="generate()" min="0.5" step="0.1" />
-        </div>
-      </div>
-    }
-  </li>
-  @if (canvasPropertiesForm['controls']['showShimmer'].value == true && canvasPropertiesForm['controls']['shimmerType'].value < 2) {
-    <li class="multipleQuestions">
-      <div class="title">Shimmer Angle Options</div>
-        <div class="options">
-          <div class="block">
-            <label>Angle: {{canvasPropertiesForm['controls']['shimmerAngle'].value}}</label>
-            <input type="range" formControlName="shimmerAngle" (change)="generate()" (keyup)="generate()" min="45" max="135" step="1" />
-          </div>
-          <div class="block">
-            <span class="angle-indicator" [ngStyle]="{'rotate': canvasPropertiesForm['controls']['shimmerAngle'].value+'deg'}"></span>
-          </div>
-          <div class="block"></div>
-          <div class="block"></div>
-        </div>
-    </li>
-    <li class="multipleQuestions">
-      <div class="title">Shimmer Gradient Advanced Options</div>
-        <div class="options">
-          <div class="block" style="position: relative;">
-            <label>Color</label>
-            <div class="colorToChoose" [(colorPicker)]="canvasPropertiesForm['controls']['shimmerColor'].value" [style.background]="canvasPropertiesForm['controls']['shimmerColor'].value" [cpOutputFormat]="'rgba'" [cpPosition]="'top-right'" [cpWidth]="'200'" (colorPickerChange)="generate()"></div>
-          </div>
-          <div class="block">
-            <label>Width</label>
-            <input type="number" formControlName="shimmerWidth" (change)="generate()" (keyup)="generate()" min="1" step="1" />
-          </div>
-          <div class="block">
-            <label>Start</label>
-            <input type="number" formControlName="shimmerStartPosition" (change)="generate()" (keyup)="generate()" step="1" />
-          </div>
-          <div class="block">
-            <label>End</label>
-            <input type="number" formControlName="shimmerEndPosition" (change)="generate()" (keyup)="generate()" min="1" step="1" />
-          </div>
-        </div>
-    </li>
-    <li class="multipleQuestions">
-      <div class="title">Shimmer Gradient Step Options <button type="button" (click)="addOpacityStep()">Add +</button></div>
-        <div class="options" formArrayName="opacitySteps">
-          <div class="block" *ngFor="let opacityStep of opacitySteps.controls; let i = index" [formGroupName]="i">
-            <label>Opacity: {{ opacityStep.get('opacity')!.value }}</label>
-            <input type="range" formControlName="opacity" (change)="generate()" (keyup)="generate()" min="0" max="1" step="0.1" />
-            <hr />
-            <label>Step: {{ opacityStep.get('step')!.value }}</label>
-            <input type="range" formControlName="step" (change)="generate()" (keyup)="generate()" min="0" max="100" step="1" />
-            <hr />
-            <button type="button" (click)="removeOpacityStep(i)">Remove</button>
-          </div>
-        </div>
-    </li>
-  }
-
-  
-</ul>
-</form>
-
-
-</div>
-
-</div>
-
-<div id="resultView">
-  <div class="paneLabel dark">Result View</div>
-
-  <div class="container">
-    <div [class]="'skeleton-'+randomSkeletonName"></div>
-  </div>
-
-</div>
-
-<div id="resultCode">
-  <div class="paneLabel light">Code</div>
-
-  <div id="codeContainer">
-
-    <p>Your generated code is below:</p>
-
-    <div class="label">CSS:</div>
-    <textarea readonly>{{generatedCss}}</textarea>
-    <hr />
-    <div class="label">HTML:</div>
-    <textarea readonly>&#60;div class="skeleton-{{randomSkeletonName}}"&#62;&#60;/div&#62;</textarea>
-    <p>Insert your content <strong>inside</strong> this div once it's loaded and ready to be displayed, for example...<br /><br />
-    <strong>Angular:</strong><br />&#60;div class="skeleton-{{randomSkeletonName}}"&#62;<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#60;div *ngIf="isLoaded"&#62;YOUR CONTENT&#60;/div&#62;<br />&#60;/div&#62;<br /><br />
-    <strong>Vue:</strong><br />&#60;div class="skeleton-{{randomSkeletonName}}"&#62;<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#60;div v-if="isLoaded"&#62;YOUR CONTENT&#60;/div&#62;<br />&#60;/div&#62;<br /><br />
-    <strong>React:</strong><br />&#60;div class="skeleton-{{randomSkeletonName}}"&#62;<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#123;isLoaded &#38;&#38;&#60;div&#62;YOUR CONTENT&#60;/div&#62;&#125;<br />&#60;/div&#62;
-  </p>
-</div>
-
-</div>
+<app-result-view [randomSkeletonName]="randomSkeletonName"></app-result-view>
+<app-result-code [generatedCss]="generatedCss()" [randomSkeletonName]="randomSkeletonName"></app-result-code>
 
 
 

@@ -1,4 +1,177 @@
 @import "@angular/cdk/overlay-prebuilt.css";
+ 
+/* App UI helpers */
+.tipHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.codeActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+}
+
+.copyStatus {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.activeItemSummary {
+  font-size: 12px;
+  margin-bottom: 6px;
+  opacity: 0.8;
+}
+
+.presetManager {
+  padding: 10px;
+  margin: 10px 0 16px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.presetRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.presetRow input {
+  flex: 1;
+  padding: 4px;
+    border: 1px solid #ccc6be;
+    border-radius: 6px;
+}
+
+.presetEmpty {
+  margin-top: 8px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.presetList {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.presetToolbar {
+  display: flex;
+  gap: 8px;
+  margin: 6px 0 10px;
+}
+
+.presetFileInput {
+  display: none;
+}
+
+.presetItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.presetName {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.presetActions {
+  display: flex;
+  gap: 6px;
+}
+
+.emptyState {
+  padding: 14px;
+  margin: 12px 0;
+  border: 1px dashed rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.emptyTitle {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.emptyBody {
+  font-size: 13px;
+  opacity: 0.8;
+  margin-bottom: 10px;
+}
+
+.emptyStateActions {
+  display: flex;
+  gap: 8px;
+}
+
+.toolsToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 6px 0 12px;
+}
+
+.toolsToggleLabel {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.toolsToggleActions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.guideOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.guideCard {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 520px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.guideTitle {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.guideBody {
+  font-size: 14px;
+  margin-bottom: 10px;
+  opacity: 0.85;
+}
+
+.guideList {
+  font-size: 13px;
+  display: grid;
+  gap: 6px;
+  margin-bottom: 16px;
+}
 /* You can add global styles to this file, and also import other style files */
 /*
  * HTML5 Boilerplate
@@ -372,19 +545,7 @@
     box-sizing: border-box;
   }
   
-  /* Reset IOS styling START */
-  textarea,
-  input[type="text"],
-  input[type="password"],
-  input[type="number"],
-  input[type="button"],
-  input[type="submit"],
-  input[type="reset"],
-  input[type="search"] {
-    -webkit-appearance: none;
-    border-radius: 0;
-  }
-  
+  /* Reset IOS styling START */  
   select {
     background: url("assets/dropdownArrow.svg") no-repeat center right;
     background-size: 15px 15px;

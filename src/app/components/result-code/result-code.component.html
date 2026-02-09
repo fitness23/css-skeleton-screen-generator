@@ -1,0 +1,32 @@
+<div id="resultCode">
+  <div class="paneLabel light">Code</div>
+
+  <div id="codeContainer">
+
+    <p>Your generated code is below:</p>
+
+    <div class="label">CSS:</div>
+    <div class="codeActions">
+      <button type="button" class="standardButton" (click)="copyCss()">Copy CSS</button>
+      @if (copyStatus() === 'css') {
+        <span class="copyStatus">Copied</span>
+      }
+    </div>
+    <textarea readonly>{{generatedCss}}</textarea>
+    <hr />
+    <div class="label">HTML:</div>
+    <div class="codeActions">
+      <button type="button" class="standardButton" (click)="copyHtml()">Copy HTML</button>
+      @if (copyStatus() === 'html') {
+        <span class="copyStatus">Copied</span>
+      }
+    </div>
+    <textarea readonly>&#60;div class="skeleton-{{randomSkeletonName}}"&#62;&#60;/div&#62;</textarea>
+    <p>Insert your content <strong>inside</strong> this div once it's loaded and ready to be displayed, for example...<br /><br />
+    <strong>Angular:</strong><br />&#60;div class="skeleton-{{randomSkeletonName}}"&#62;<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#60;div *ngIf="isLoaded"&#62;YOUR CONTENT&#60;/div&#62;<br />&#60;/div&#62;<br /><br />
+    <strong>Vue:</strong><br />&#60;div class="skeleton-{{randomSkeletonName}}"&#62;<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#60;div v-if="isLoaded"&#62;YOUR CONTENT&#60;/div&#62;<br />&#60;/div&#62;<br /><br />
+    <strong>React:</strong><br />&#60;div class="skeleton-{{randomSkeletonName}}"&#62;<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#123;isLoaded &#38;&#38;&#60;div&#62;YOUR CONTENT&#60;/div&#62;&#125;<br />&#60;/div&#62;
+  </p>
+</div>
+
+</div>

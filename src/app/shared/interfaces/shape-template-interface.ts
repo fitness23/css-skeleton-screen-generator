@@ -5,7 +5,7 @@ export interface ShapeTemplate {
 }
 
 export interface ShapeDetails {
-  type: string
+  type: 'rectangle' | 'circle'
   width: number | null;
   widthMeasurement: string | null;
   widthCalc: any
@@ -21,6 +21,10 @@ export interface ShapeDetails {
   diameterCalc: any
   diameterCalcAmount: any
   diameterCalcUnit: any
+  borderRadiusTopLeft: number
+  borderRadiusTopRight: number
+  borderRadiusBottomRight: number
+  borderRadiusBottomLeft: number
   color: string
   horizontalPositioningStartingPoint: string;
   horizontalPositioningAmount: number
